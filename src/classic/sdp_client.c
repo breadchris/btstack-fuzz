@@ -51,6 +51,7 @@
 #include "classic/sdp_util.h"
 #include "hci_cmd.h"
 #include "l2cap.h"
+#include "fuzz.h"
 
 // Types SDP Parser - Data Element stream helper
 typedef enum { 
@@ -348,6 +349,9 @@ static void sdp_client_send_request(uint16_t channel){
             return;
     }
 
+    // [FUZZ] Byte flip outgoing sdp traffic
+    fuzz(data, request_len);
+
     // prevent re-entrance
     sdp_client_state = W4_RESPONSE;
     PDU_ID = SDP_Invalid;
@@ -480,7 +484,7 @@ void sdp_client_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *p
     }
 }
 
-
+// [FUZZ] Lots of stuff going on here, want to fuzz this
 static uint16_t sdp_client_setup_service_search_attribute_request(uint8_t * data){
 
     uint16_t offset = 0;

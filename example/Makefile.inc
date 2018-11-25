@@ -33,6 +33,7 @@ CORE += \
 	btstack_util.c 	            \
 
 COMMON += \
+	fuzz.c                      \
 	ad_parser.c                 \
 	hci.c			            \
 	hci_cmd.c		            \

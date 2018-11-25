@@ -90,7 +90,6 @@ uint32_t btstack_min(uint32_t a, uint32_t b);
  */
 uint32_t btstack_max(uint32_t a, uint32_t b);
 
-	
 /** 
  * @brief Read 16/24/32 bit little endian value from buffer
  * @param buffer
@@ -101,6 +100,8 @@ uint16_t little_endian_read_16(const uint8_t * buffer, int position);
 uint32_t little_endian_read_24(const uint8_t * buffer, int position);
 uint32_t little_endian_read_32(const uint8_t * buffer, int position);
 
+// [FUZZ] Replace these methods with fuzzed data?
+// create options for these methods for things like identifiers to bypass fuzzing
 /** 
  * @brief Write 16/32 bit little endian value into buffer
  * @param buffer

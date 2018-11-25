@@ -59,7 +59,7 @@
 #include <unistd.h>   /* UNIX standard function definitions */
 #include <sys/types.h>
 
-#include <libusb.h>
+#include <libusb-1.0/libusb.h>
 
 #include "btstack_config.h"
 

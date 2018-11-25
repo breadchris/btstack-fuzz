@@ -46,6 +46,8 @@ VPATH += ${BTSTACK_ROOT}/chipset/em9301
 VPATH += ${BTSTACK_ROOT}/chipset/stlc2500d
 VPATH += ${BTSTACK_ROOT}/chipset/tc3566x
 
+CFLAGS += -Wno-error
+
 ifeq ($(OS),Windows_NT)
 LDFLAGS += -lws2_32
 endif

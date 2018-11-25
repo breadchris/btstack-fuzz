@@ -52,6 +52,7 @@
 #include "btstack_debug.h"
 #include "btstack_event.h"
 #include "btstack_memory.h"
+#include "fuzz.h"
 
 #include <stdarg.h>
 #include <string.h>
@@ -806,6 +807,7 @@ void l2cap_release_packet_buffer(void){
     hci_release_packet_buffer();
 }
 
+// [FUZZ] Mess up these values
 static void l2cap_setup_header(uint8_t * acl_buffer, hci_con_handle_t con_handle, uint8_t packet_boundary, uint16_t remote_cid, uint16_t len){
     // 0 - Connection handle : PB=pb : BC=00 
     little_endian_store_16(acl_buffer, 0, con_handle | (packet_boundary << 12) | (0 << 14));
@@ -834,7 +836,10 @@ int l2cap_send_prepared_connectionless(hci_con_handle_t con_handle, uint16_t cid
     
     uint8_t *acl_buffer = hci_get_outgoing_packet_buffer();
     l2cap_setup_header(acl_buffer, con_handle, 0, cid, len);
-    // send
+
+    // [FUZZ] Byte flip outgoing l2cap le traffic
+    // byteflip(acl_buffer, len);
+
     return hci_send_acl_packet_buffer(len+8);
 }
 
@@ -1103,7 +1108,6 @@ static int l2cap_send_signaling_packet(hci_con_handle_t handle, L2CAP_SIGNALING_
 // assumption - only on Classic connections
 // cannot be used for L2CAP ERTM
 int l2cap_send_prepared(uint16_t local_cid, uint16_t len){
-    
     if (!hci_is_packet_buffer_reserved()){
         log_error("l2cap_send_prepared called without reserving packet first");
         return BTSTACK_ACL_BUFFERS_FULL;
@@ -1143,6 +1147,10 @@ int l2cap_send_prepared(uint16_t local_cid, uint16_t len){
         little_endian_store_16(acl_buffer, 8 + len, fcs);
     }
 #endif
+
+    // [FUZZ] Packet data is stored in: l2cap_reserve_packet_buffer want to fuzz this
+    // [FUZZ] Fuzz l2cap traffic
+    // fuzz(acl_buffer + 1, len + fcs_size)
 
     // send
     return hci_send_acl_packet_buffer(len+8+fcs_size);
@@ -3776,6 +3784,10 @@ uint8_t l2cap_le_send_data(uint16_t local_cid, uint8_t * data, uint16_t len){
         log_info("l2cap_send cid 0x%02x, cannot send", local_cid);
         return BTSTACK_ACL_BUFFERS_FULL;
     }
+
+    // [FUZZ]: Fuzz on `data`
+    // [FUZZ] Byte flip outgoing l2cap le traffic
+    // byteflip(data, len);
 
     channel->send_sdu_buffer = data;
     channel->send_sdu_len    = len;

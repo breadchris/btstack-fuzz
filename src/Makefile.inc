@@ -1,6 +1,7 @@
 # Makefile to collect all C source files of src
 
 SRC_FILES = \
+    fuzz.c \
     btstack_ring_buffer.c \
     btstack_hid_parser.c \
     ad_parser.c \
@@ -21,4 +22,3 @@ SRC_FILES = \
     hci_transport_h5.c \
     btstack_tlv.c \
     btstack_crypto.c \
-
