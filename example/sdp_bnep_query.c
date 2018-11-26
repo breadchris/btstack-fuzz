@@ -61,7 +61,7 @@ int attribute_id = -1;
 static uint8_t   attribute_value[1000];
 static const int attribute_value_buffer_size = sizeof(attribute_value);
 
-static bd_addr_t remote = {0x04,0x0C,0xCE,0xE4,0x85,0xD3};
+static bd_addr_t remote = {0x98,0x01,0xA7,0x9D,0xC1,0x94};
 static btstack_packet_callback_registration_t hci_event_callback_registration;
 
 static void assertBuffer(int size){
@@ -118,6 +118,7 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
                 sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_PROTOCOL_BNEP);
             }
             break;
+        // TODO: Create timeout/listen for events to retry fuzz
         default:
             break;
     }

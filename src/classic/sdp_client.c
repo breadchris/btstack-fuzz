@@ -350,7 +350,7 @@ static void sdp_client_send_request(uint16_t channel){
     }
 
     // [FUZZ] Byte flip outgoing sdp traffic
-    fuzz(data, request_len);
+    // fuzz(data, request_len);
 
     // prevent re-entrance
     sdp_client_state = W4_RESPONSE;

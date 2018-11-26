@@ -51,6 +51,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <time.h>
 
 #include "btstack.h"
 
@@ -166,6 +168,8 @@ static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel
                 break;
             } 
             printf("SDP query done.\n");
+            // sleep(1);
+            // sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
             break;
     }
 }

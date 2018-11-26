@@ -8,7 +8,7 @@ COMMON += btstack_audio_portaudio.c
 
 include ${BTSTACK_ROOT}/example/Makefile.inc
 
-CFLAGS  += -g -std=c99 -Wall -Wmissing-prototypes -Wstrict-prototypes -Wshadow -Wunused-parameter -Wredundant-decls -Wsign-compare -lusb-1.0
+CFLAGS  += -g -std=c99 -Wall -Wmissing-prototypes -Wstrict-prototypes -Wshadow -Wunused-parameter -Wredundant-decls -Wsign-compare -lusb-1.0 -DENABLE_LOG_DEBUG=1
 # CFLAGS += -Werror
 # CFLAGS += -pedantic
 

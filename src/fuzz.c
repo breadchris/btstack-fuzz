@@ -10,15 +10,15 @@
 
  */
 
-int special_bytes[] = { 0x7f, 0xff, 0x00, 0x41 };
-int special_words[] = { 0x7fff, 0x8000, 0xffff, 0x4141 };
+uint8_t special_bytes[] = { 0x7f, 0xff, 0x00, 0x41 };
+uint16_t special_words[] = { 0x7fff, 0x8000, 0xffff, 0x4141 };
 
 void fuzz_debug(uint16_t index, const char *format, ...)
 {
   va_list ap;
 
   va_start(ap, format);
-  vsyslog(LOG_DEBUG, format, ap);
+  syslog(LOG_DEBUG, format, ap);
   va_end(ap);
 }
 
@@ -29,14 +29,15 @@ void fuzz(uint8_t *data, uint16_t len) {
 #ifdef FUZZ
   //fuzz_print(data, len);
   byteflip(data, len);
-  //make_as(data, *len);
+  //make_as(data, len);
 #endif
 }
 
 void byteflip(uint8_t *data, uint16_t len) {
-  uint8_t rand_byte = rand() % 255;
-
-  data[rand() % len] ^= rand_byte ;
+  if (rand() % 100 < 10) {
+    uint8_t rand_byte = special_bytes[rand() % (sizeof(special_bytes) / sizeof(uint8_t))];
+    data[rand() % len] = rand_byte ;
+  }
 }
 
 void make_as(uint8_t *data, uint16_t len) {

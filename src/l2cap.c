@@ -838,7 +838,7 @@ int l2cap_send_prepared_connectionless(hci_con_handle_t con_handle, uint16_t cid
     l2cap_setup_header(acl_buffer, con_handle, 0, cid, len);
 
     // [FUZZ] Byte flip outgoing l2cap le traffic
-    // byteflip(acl_buffer, len);
+    // fuzz(acl_buffer, len);
 
     return hci_send_acl_packet_buffer(len+8);
 }
@@ -1150,7 +1150,7 @@ int l2cap_send_prepared(uint16_t local_cid, uint16_t len){
 
     // [FUZZ] Packet data is stored in: l2cap_reserve_packet_buffer want to fuzz this
     // [FUZZ] Fuzz l2cap traffic
-    // fuzz(acl_buffer + 1, len + fcs_size)
+    // fuzz(acl_buffer + 1, len + 8 + fcs_size);
 
     // send
     return hci_send_acl_packet_buffer(len+8+fcs_size);
@@ -3787,7 +3787,7 @@ uint8_t l2cap_le_send_data(uint16_t local_cid, uint8_t * data, uint16_t len){
 
     // [FUZZ]: Fuzz on `data`
     // [FUZZ] Byte flip outgoing l2cap le traffic
-    // byteflip(data, len);
+    // fuzz(data, len);
 
     channel->send_sdu_buffer = data;
     channel->send_sdu_len    = len;
