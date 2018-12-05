@@ -317,7 +317,7 @@ static void l2cap_ertm_store_fragment(l2cap_channel_t * channel, l2cap_segmentat
     log_info("index %u, mtu %u, packet tx %p", index, channel->local_mtu, tx_packet);
     int pos = 0;
     if (sar == L2CAP_SEGMENTATION_AND_REASSEMBLY_START_OF_L2CAP_SDU){
-        little_endian_store_16(tx_packet, 0, sdu_length);
+        little_endian_store_16_fuzz(TAG_L2CAP_LEN, tx_packet, 0, sdu_length);
         pos += 2;
     }
     memcpy(&tx_packet[pos], data, len);
@@ -375,9 +375,9 @@ static int l2cap_ertm_send(l2cap_channel_t * channel, uint8_t * data, uint16_t l
 static uint16_t l2cap_setup_options_ertm_request(l2cap_channel_t * channel, uint8_t * config_options){
     int pos = 0;
     config_options[pos++] = L2CAP_CONFIG_OPTION_TYPE_RETRANSMISSION_AND_FLOW_CONTROL;
-    config_options[pos++] = 9;      // length
+    config_options[pos++] = uint8_fuzz(TAG_L2CAP_ERTM_CONFIG, 2);      // length
     config_options[pos++] = (uint8_t) channel->mode;
-    config_options[pos++] = channel->num_rx_buffers;    // == TxWindows size
+    config_options[pos++] = uint8_fuzz(TAG_L2CAP_RX_BUFS, channel->num_rx_buffers);    // == TxWindows size
     config_options[pos++] = channel->local_max_transmit;
     little_endian_store_16( config_options, pos, channel->local_retransmission_timeout_ms);
     pos += 2;
@@ -387,16 +387,17 @@ static uint16_t l2cap_setup_options_ertm_request(l2cap_channel_t * channel, uint
     pos += 2;
     //
     config_options[pos++] = L2CAP_CONFIG_OPTION_TYPE_MAX_TRANSMISSION_UNIT;
-    config_options[pos++] = 2;     // length
+    config_options[pos++] = uint8_fuzz(TAG_L2CAP_MTU_CONFIG, 2);     // length
     little_endian_store_16(config_options, pos, channel->local_mtu);
     pos += 2;
     // 
     config_options[pos++] = L2CAP_CONFIG_OPTION_TYPE_FRAME_CHECK_SEQUENCE;
-    config_options[pos++] = 1;     // length
+    config_options[pos++] = uint8_fuzz(TAG_L2CAP_FRAME_CHECK, 1);     // length
     config_options[pos++] = channel->fcs_option;
     return pos; // 11+4+3=18
 }
 
+// [FUZZ] Fuzz these lengths
 static uint16_t l2cap_setup_options_ertm_response(l2cap_channel_t * channel, uint8_t * config_options){
     int pos = 0;
     config_options[pos++] = L2CAP_CONFIG_OPTION_TYPE_RETRANSMISSION_AND_FLOW_CONTROL;
@@ -812,7 +813,7 @@ static void l2cap_setup_header(uint8_t * acl_buffer, hci_con_handle_t con_handle
     // 0 - Connection handle : PB=pb : BC=00 
     little_endian_store_16(acl_buffer, 0, con_handle | (packet_boundary << 12) | (0 << 14));
     // 2 - ACL length
-    little_endian_store_16(acl_buffer, 2,  len + 4);
+    little_endian_store_16_fuzz(TAG_L2CAP_HEADER_LEN, acl_buffer, 2,  len + 4);
     // 4 - L2CAP packet length
     little_endian_store_16(acl_buffer, 4,  len + 0);
     // 6 - L2CAP channel DEST
@@ -1243,7 +1244,7 @@ void l2cap_set_max_le_mtu(uint16_t max_mtu){
 static uint16_t l2cap_setup_options_mtu(uint8_t * config_options, uint16_t mtu){
     config_options[0] = L2CAP_CONFIG_OPTION_TYPE_MAX_TRANSMISSION_UNIT; // MTU
     config_options[1] = 2; // len param
-    little_endian_store_16(config_options, 2, mtu);
+    little_endian_store_16_fuzz(TAG_L2CAP_MTU, config_options, 2, mtu);
     return 4;
 }
 
@@ -1664,7 +1665,7 @@ static void l2cap_run(void){
                 if (!channel->send_sdu_pos){
                     // store SDU len
                     channel->send_sdu_pos += 2;
-                    little_endian_store_16(l2cap_payload, pos, channel->send_sdu_len);
+                    little_endian_store_16_fuzz(TAG_L2CAP_SDU_LEN, l2cap_payload, pos, channel->send_sdu_len);
                     pos += 2;
                 }
                 payload_size = btstack_min(channel->send_sdu_len + 2 - channel->send_sdu_pos, channel->remote_mps - pos);

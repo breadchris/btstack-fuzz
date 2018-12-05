@@ -46,6 +46,9 @@
     3a) Pair using every pairing capability (JustWorks, ignore anything that requires user interaction?)
     3b) Connect to channel
     3c) Send bytes and wait for response
+
+LE Scan:
+    https://github.com/bluekitchen/btstack/blob/2f98d3c60ab84a4e7ec4a33c528cd323900cd4a3/platform/daemon/example/le_scan.c
 */
  // *****************************************************************************
 
@@ -168,7 +171,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             if (!ad_data_contains_uuid16(length, (uint8_t *) data, REMOTE_SERVICE)) break;
             printf("Found remote with UUID %04x, connecting...\n", REMOTE_SERVICE);
             gap_stop_scan();
-            gap_connect(address,address_type);
+            gap_connect(address, address_type);
             break;
         }
         case SM_EVENT_JUST_WORKS_REQUEST:

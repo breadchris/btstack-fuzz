@@ -65,7 +65,6 @@ extern "C" {
 
 // will be moved to daemon/btstack_device_name_db.h
 
-
 /**
  * @brief The device name type
  */
@@ -100,7 +99,20 @@ uint16_t little_endian_read_16(const uint8_t * buffer, int position);
 uint32_t little_endian_read_24(const uint8_t * buffer, int position);
 uint32_t little_endian_read_32(const uint8_t * buffer, int position);
 
-// [FUZZ] Replace these methods with fuzzed data?
+// [FUZZ] Fuzzing functions
+
+#define SHOULD_FUZZ_LENGTH 1
+#define TAG_L2CAP_LEN 1
+#define TAG_L2CAP_HEADER_LEN 2
+#define TAG_L2CAP_MTU 3
+#define TAG_L2CAP_SDU_LEN 4
+#define TAG_L2CAP_ERTM_CONFIG 5
+#define TAG_L2CAP_RX_BUFS 6
+#define TAG_L2CAP_MTU_CONFIG 7
+#define TAG_L2CAP_FRAME_CHECK 8
+
+void little_endian_store_16_fuzz(uint64_t tag, uint8_t *buffer, uint16_t pos, uint16_t value);
+
 // create options for these methods for things like identifiers to bypass fuzzing
 /** 
  * @brief Write 16/32 bit little endian value into buffer

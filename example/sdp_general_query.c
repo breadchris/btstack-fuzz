@@ -165,11 +165,10 @@ static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel
         case SDP_EVENT_QUERY_COMPLETE:
             if (sdp_event_query_complete_get_status(packet)){
                 printf("SDP query failed 0x%02x\n", sdp_event_query_complete_get_status(packet));
-                break;
             } 
             printf("SDP query done.\n");
-            // sleep(1);
-            // sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
+            sleep(1);
+            sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
             break;
     }
 }

@@ -10,7 +10,7 @@
 
  */
 
-uint8_t special_bytes[] = { 0x7f, 0xff, 0x00, 0x41 };
+uint8_t special_bytes[] = { 0x7f, 0xff, 0x00, 0x41, 0x01, 0xfe };
 uint16_t special_words[] = { 0x7fff, 0x8000, 0xffff, 0x4141 };
 
 void fuzz_debug(uint16_t index, const char *format, ...)
@@ -34,7 +34,7 @@ void fuzz(uint8_t *data, uint16_t len) {
 }
 
 void byteflip(uint8_t *data, uint16_t len) {
-  if (rand() % 100 < 10) {
+  if (rand() % 100 < 30) {
     uint8_t rand_byte = special_bytes[rand() % (sizeof(special_bytes) / sizeof(uint8_t))];
     data[rand() % len] = rand_byte ;
   }

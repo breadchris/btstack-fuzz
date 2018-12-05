@@ -86,6 +86,36 @@ void little_endian_store_16(uint8_t *buffer, uint16_t pos, uint16_t value){
     buffer[pos++] = (uint8_t)(value >> 8);
 }
 
+uint16_t uint8_fuzz_values[] = {
+    0xff,
+    0x7f,
+    0x00,
+    0x01
+};
+
+uint16_t uint16_fuzz_values[] = {
+    0xffff,
+    0x7fff,
+    0x0000,
+    0x0001,
+    0xff00
+};
+
+uint8_t uint8_fuzz(uint64_t tag, uint8_t value) {
+    if (SHOULD_FUZZ_LENGTH == 1) {
+        value = uint8_fuzz_values[rand() % (sizeof(fuzz_values) / sizeof(uint8_t))]
+    }
+    *buffer = value
+}
+
+void little_endian_store_16_fuzz(uint64_t tag, uint8_t *buffer, uint16_t pos, uint16_t value) {
+    if (SHOULD_FUZZ_LENGTH == 1) {
+        *(uint16_t *)(buffer + pos) = uint16_fuzz_values[rand() % (sizeof(fuzz_values) / sizeof(uint16_t))];
+    } else {
+        little_endian_store_16(buffer, pos, value);
+    }
+}
+
 void little_endian_store_32(uint8_t *buffer, uint16_t pos, uint32_t value){
     buffer[pos++] = (uint8_t)(value);
     buffer[pos++] = (uint8_t)(value >> 8);
