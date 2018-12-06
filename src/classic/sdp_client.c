@@ -549,17 +549,17 @@ static uint16_t sdp_client_setup_service_search_request(uint8_t * data){
     offset += service_search_pattern_len;
 
     //     MaximumAttributeByteCount - uint16_t  0x0007 - 0xffff -> mtu
-    big_endian_store_16(data, offset, mtu);
+    big_endian_store_16_fuzz(TAG_SDP_MTU, data, offset, mtu);
     offset += 2;
 
     //     ContinuationState - uint8_t number of cont. bytes N<=16 
-    data[offset++] = continuationStateLen;
+    data[offset++] = uint8_fuzz(TAG_SDP_CONT_LEN, continuationStateLen);
     //                       - N-bytes previous response from server
     memcpy(data + offset, continuationState, continuationStateLen);
     offset += continuationStateLen;
 
     // uint16_t paramLength 
-    big_endian_store_16(data, 3, offset - 5);
+    big_endian_store_16_fuzz(TAG_SDP_PARAM_LEN, data, 3, offset - 5);
 
     return offset;
 }
@@ -584,8 +584,10 @@ static uint16_t sdp_client_setup_service_attribute_request(uint8_t * data){
     offset += 4;
 
     //     MaximumAttributeByteCount - uint16_t  0x0007 - 0xffff -> mtu
-    big_endian_store_16(data, offset, mtu);
+    big_endian_store_16_fuzz(TAG_SDP_MTU, data, offset, mtu);
     offset += 2;
+
+    // [FUZZ] Fuzz the attribute id list
 
     //     AttibuteIDList  
     uint16_t attribute_id_list_len = de_get_len(attribute_id_list);
@@ -593,7 +595,7 @@ static uint16_t sdp_client_setup_service_attribute_request(uint8_t * data){
     offset += attribute_id_list_len;
 
     //     ContinuationState - uint8_t number of cont. bytes N<=16 
-    data[offset++] = continuationStateLen;
+    data[offset++] = uint8_fuzz(TAG_SDP_CONT_LEN, continuationStateLen);
     //                       - N-bytes previous response from server
     memcpy(data + offset, continuationState, continuationStateLen);
     offset += continuationStateLen;

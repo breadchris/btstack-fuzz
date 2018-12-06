@@ -150,7 +150,7 @@ typedef struct {
 // pts: static bd_addr_t remote = {0x00, 0x1B, 0xDC, 0x08, 0x0A, 0xA5};
 // mac 2013: static const char * device_addr_string = "84:38:35:65:d1:15";
 // iPhone 5S: 
-static const char * device_addr_string = "54:E4:3A:26:A2:39";
+static const char * device_addr_string = "D4:61:2E:12:67:7A";
 #endif
 
 static uint8_t  sdp_avdtp_sink_service_buffer[150];

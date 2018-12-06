@@ -113,7 +113,7 @@ static uint16_t l2cap_create_signaling_internal(uint8_t * acl_buffer, hci_con_ha
     // 6 - L2CAP channel = 1
     little_endian_store_16(acl_buffer, 6, cid);
     // 8 - Code
-    acl_buffer[8] = cmd;
+    acl_buffer[8] = uint8_fuzz(TAG_L2CAP_SIGNALING_CMD, cmd);
     // 9 - id (!= 0 sequentially)
     acl_buffer[9] = identifier;
     
@@ -129,12 +129,14 @@ static uint16_t l2cap_create_signaling_internal(uint8_t * acl_buffer, hci_con_ha
                 // minimal va_arg is int: 2 bytes on 8+16 bit CPUs
                 acl_buffer[pos++] = word & 0xff;
                 if (*format == '2') {
-                    acl_buffer[pos++] = word >> 8;
+                    acl_buffer[pos++] = uint8_fuzz(TAG_L2CAP_SIGNAL_WORD, word >> 8);
                 }
                 break;
             case 'D': // variable data. passed: len, ptr
                 word = va_arg(argptr, int);
                 ptr  = va_arg(argptr, uint8_t *);
+
+                // [FUZZ] TODO fuzz these values
                 memcpy(&acl_buffer[pos], ptr, word);
                 pos += word;
                 break;
@@ -149,11 +151,11 @@ static uint16_t l2cap_create_signaling_internal(uint8_t * acl_buffer, hci_con_ha
     // - the l2cap payload length is counted after the following channel id (only payload) 
     
     // 2 - ACL length
-    little_endian_store_16(acl_buffer, 2,  pos - 4);
+    little_endian_store_16_fuzz(TAG_L2CAP_ACL_LEN, acl_buffer, 2,  pos - 4);
     // 4 - L2CAP packet length
-    little_endian_store_16(acl_buffer, 4,  pos - 6 - 2);
+    little_endian_store_16_fuzz(TAG_L2CAP_PACKET_LEN, acl_buffer, 4,  pos - 6 - 2);
     // 10 - L2CAP signaling parameter length
-    little_endian_store_16(acl_buffer, 10, pos - 12);
+    little_endian_store_16_fuzz(TAG_L2CAP_SIGNALING_LEN, acl_buffer, 10, pos - 12);
     
     return pos;
 }

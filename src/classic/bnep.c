@@ -81,12 +81,12 @@ static void bnep_emit_open_channel_complete(bnep_channel_t *channel, uint8_t sta
 
     uint8_t event[3 + sizeof(bd_addr_t) + 4 * sizeof(uint16_t)];
     event[0] = BNEP_EVENT_CHANNEL_OPENED;
-    event[1] = sizeof(event) - 2;
+    event[1] = uint8_fuzz(TAG_BNEP_OPEN_LEN, sizeof(event) - 2);
     event[2] = status;
     little_endian_store_16(event, 3, channel->l2cap_cid);
     little_endian_store_16(event, 5, channel->uuid_source);
     little_endian_store_16(event, 7, channel->uuid_dest);
-    little_endian_store_16(event, 9, channel->max_frame_size);
+    little_endian_store_16_fuzz(TAG_BNEP_FRAME_SIZE, event, 9, channel->max_frame_size);
     bd_addr_copy(&event[11], channel->remote_addr);
     hci_dump_packet( HCI_EVENT_PACKET, 0, event, sizeof(event));
 	(*channel->packet_handler)(HCI_EVENT_PACKET, 0, (uint8_t *) event, sizeof(event));
@@ -99,7 +99,7 @@ static void bnep_emit_channel_timeout(bnep_channel_t *channel)
 
     uint8_t event[2 + sizeof(bd_addr_t) + 3 * sizeof(uint16_t) + sizeof(uint8_t)];
     event[0] = BNEP_EVENT_CHANNEL_TIMEOUT;
-    event[1] = sizeof(event) - 2;
+    event[1] = uint8_fuzz(TAG_BNEP_CHANNEL_OPEN_LEN, sizeof(event) - 2);
     little_endian_store_16(event, 2, channel->l2cap_cid);
     little_endian_store_16(event, 4, channel->uuid_source);
     little_endian_store_16(event, 6, channel->uuid_dest);
@@ -116,7 +116,7 @@ static void bnep_emit_channel_closed(bnep_channel_t *channel)
 
     uint8_t event[2 + sizeof(bd_addr_t) + 3 * sizeof(uint16_t)];
     event[0] = BNEP_EVENT_CHANNEL_CLOSED;
-    event[1] = sizeof(event) - 2;
+    event[1] = uint8_fuzz(TAG_BNEP_CHANNEL_CLOSED_LEN, sizeof(event) - 2);
     little_endian_store_16(event, 2, channel->l2cap_cid);
     little_endian_store_16(event, 4, channel->uuid_source);
     little_endian_store_16(event, 6, channel->uuid_dest);
@@ -131,7 +131,7 @@ static void bnep_emit_ready_to_send(bnep_channel_t *channel)
 
     uint8_t event[4];
     event[0] = BNEP_EVENT_CAN_SEND_NOW;
-    event[1] = sizeof(event) - 2;
+    event[1] = uint8_fuzz(TAG_BNEP_CHANNEL_READY_LEN, sizeof(event) - 2);
     little_endian_store_16(event, 2, channel->l2cap_cid);
     hci_dump_packet( HCI_EVENT_PACKET, 0, event, sizeof(event));
 	(*channel->packet_handler)(HCI_EVENT_PACKET, 0, (uint8_t *) event, sizeof(event));
@@ -186,7 +186,7 @@ static int bnep_send_connection_request(bnep_channel_t *channel, uint16_t uuid_s
 	bnep_out_buffer[pos++] = BNEP_CONTROL_TYPE_SETUP_CONNECTION_REQUEST;
 
     /* Add UUID Size */
-    bnep_out_buffer[pos++] = 2;
+    bnep_out_buffer[pos++] = uint8_fuzz(TAG_BNEP_CONN_REQUEST_LEN, 2);
 
     /* Add dest and source UUID */
     big_endian_store_16(bnep_out_buffer, pos, uuid_dest);
@@ -252,13 +252,13 @@ static int bnep_send_filter_net_type_set(bnep_channel_t *channel, bnep_net_filte
 	bnep_out_buffer[pos++] = BNEP_PKT_TYPE_CONTROL;
 	bnep_out_buffer[pos++] = BNEP_CONTROL_TYPE_FILTER_NET_TYPE_SET;
 
-    big_endian_store_16(bnep_out_buffer, pos, len * 2 * 2);
+    big_endian_store_16_fuzz(TAG_BNEP_FILTER_NET_LEN, bnep_out_buffer, pos, len * 2 * 2);
     pos += 2;
 
     for (i = 0; i < len; i ++) {
-        big_endian_store_16(bnep_out_buffer, pos, filter[i].range_start);
+        big_endian_store_16_fuzz(TAG_BNEP_FILTER_NET_START, bnep_out_buffer, pos, filter[i].range_start);
         pos += 2;
-        big_endian_store_16(bnep_out_buffer, pos, filter[i].range_end);
+        big_endian_store_16_fuzz(TAG_BNEP_FILTER_NET_END, bnep_out_buffer, pos, filter[i].range_end);
         pos += 2;
     }
 
@@ -320,7 +320,7 @@ static int bnep_send_filter_multi_addr_set(bnep_channel_t *channel, bnep_multi_f
 	bnep_out_buffer[pos++] = BNEP_PKT_TYPE_CONTROL;
 	bnep_out_buffer[pos++] = BNEP_CONTROL_TYPE_FILTER_MULTI_ADDR_SET;
 
-    big_endian_store_16(bnep_out_buffer, pos, len * 2 * ETHER_ADDR_LEN);
+    big_endian_store_16_fuzz(TAG_BNEP_MULTI_ADDR_LEN, bnep_out_buffer, pos, len * 2 * ETHER_ADDR_LEN);
     pos += 2;
 
     for (i = 0; i < len; i ++) {
@@ -552,6 +552,8 @@ int bnep_send(uint16_t bnep_cid, uint8_t *packet, uint16_t len)
     /* Add protocol type */
     big_endian_store_16(bnep_out_buffer, pos_out, network_protocol_type);
     pos_out += 2;
+
+    // [FUZZ] Fuzz extension headers
     
     /* TODO: Add extension headers, if we may support them at a later stage */
     /* Add the payload and then send out the package */

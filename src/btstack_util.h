@@ -53,6 +53,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "bluetooth.h"
 #include "btstack_defines.h"
@@ -101,7 +102,8 @@ uint32_t little_endian_read_32(const uint8_t * buffer, int position);
 
 // [FUZZ] Fuzzing functions
 
-#define SHOULD_FUZZ_LENGTH 1
+#define SHOULD_FUZZ_LENGTH 0
+
 #define TAG_L2CAP_LEN 1
 #define TAG_L2CAP_HEADER_LEN 2
 #define TAG_L2CAP_MTU 3
@@ -110,8 +112,41 @@ uint32_t little_endian_read_32(const uint8_t * buffer, int position);
 #define TAG_L2CAP_RX_BUFS 6
 #define TAG_L2CAP_MTU_CONFIG 7
 #define TAG_L2CAP_FRAME_CHECK 8
+#define TAG_L2CAP_SIGNALING_CMD 9
+#define TAG_L2CAP_ACL_LEN 10
+#define TAG_L2CAP_PACKET_LEN 11
+#define TAG_L2CAP_SIGNALING_LEN 12
+#define TAG_L2CAP_SIGNAL_WORD 13
 
+#define TAG_BNEP_FRAME_SIZE 14
+#define TAG_BNEP_OPEN_LEN 15
+#define TAG_BNEP_TIMEOUT_LEN 16
+#define TAG_BNEP_CHANNEL_OPEN_LEN 17
+#define TAG_BNEP_CHANNEL_CLOSED_LEN 18
+#define TAG_BNEP_CHANNEL_READY_LEN 19
+#define TAG_BNEP_CONN_REQUEST_LEN 20
+#define TAG_BNEP_FILTER_NET_LEN 21
+#define TAG_BNEP_FILTER_NET_START 22
+#define TAG_BNEP_FILTER_NET_END 23
+#define TAG_BNEP_MULTI_ADDR_LEN 24
+
+#define TAG_GATT_ATTR_GROUP_TYPE 25
+#define TAG_GATT_ATTR_START_HANDLE 26
+#define TAG_GATT_ATTR_END_HANDLE 27
+#define TAG_GATT_UUID 28
+#define TAG_GATT_ATTR_HANDLE 29
+#define TAG_GATT_VALUE_OFFSET 30
+#define TAG_GATT_MTU 31
+#define TAG_GATT_START_HANDLE 32
+#define TAG_GATT_END_HANDLE 33
+
+#define TAG_SDP_MTU 34
+#define TAG_SDP_CONT_LEN 35
+#define TAG_SDP_PARAM_LEN 36
+
+uint8_t uint8_fuzz(uint64_t tag, uint8_t value);
 void little_endian_store_16_fuzz(uint64_t tag, uint8_t *buffer, uint16_t pos, uint16_t value);
+void big_endian_store_16_fuzz(uint64_t tag, uint8_t *buffer, uint16_t pos, uint16_t value);
 
 // create options for these methods for things like identifiers to bypass fuzzing
 /** 

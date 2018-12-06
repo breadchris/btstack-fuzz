@@ -1243,7 +1243,7 @@ void l2cap_set_max_le_mtu(uint16_t max_mtu){
 
 static uint16_t l2cap_setup_options_mtu(uint8_t * config_options, uint16_t mtu){
     config_options[0] = L2CAP_CONFIG_OPTION_TYPE_MAX_TRANSMISSION_UNIT; // MTU
-    config_options[1] = 2; // len param
+    config_options[1] = uint8_fuzz(TAG_L2CAP_MTU_CONFIG, 2); // len param
     little_endian_store_16_fuzz(TAG_L2CAP_MTU, config_options, 2, mtu);
     return 4;
 }

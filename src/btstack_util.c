@@ -103,17 +103,23 @@ uint16_t uint16_fuzz_values[] = {
 
 uint8_t uint8_fuzz(uint64_t tag, uint8_t value) {
     if (SHOULD_FUZZ_LENGTH == 1) {
-        value = uint8_fuzz_values[rand() % (sizeof(fuzz_values) / sizeof(uint8_t))]
+        value = uint8_fuzz_values[rand() % (sizeof(uint8_fuzz_values) / sizeof(uint8_t))];
     }
-    *buffer = value
+    return value;
 }
 
 void little_endian_store_16_fuzz(uint64_t tag, uint8_t *buffer, uint16_t pos, uint16_t value) {
     if (SHOULD_FUZZ_LENGTH == 1) {
-        *(uint16_t *)(buffer + pos) = uint16_fuzz_values[rand() % (sizeof(fuzz_values) / sizeof(uint16_t))];
-    } else {
-        little_endian_store_16(buffer, pos, value);
+        value = uint16_fuzz_values[rand() % (sizeof(uint16_fuzz_values) / sizeof(uint16_t))];
     }
+    little_endian_store_16(buffer, pos, value);
+}
+
+void big_endian_store_16_fuzz(uint64_t tag, uint8_t *buffer, uint16_t pos, uint16_t value) {
+    if (SHOULD_FUZZ_LENGTH == 1) {
+        value = uint16_fuzz_values[rand() % (sizeof(uint16_fuzz_values) / sizeof(uint16_t))];
+    }
+    big_endian_store_16(buffer, pos, value);
 }
 
 void little_endian_store_32(uint8_t *buffer, uint16_t pos, uint32_t value){

@@ -221,8 +221,8 @@ static void att_find_information_request(uint16_t request_type, uint16_t periphe
     l2cap_reserve_packet_buffer();
     uint8_t * request = l2cap_get_outgoing_buffer();
     request[0] = request_type;
-    little_endian_store_16(request, 1, start_handle);
-    little_endian_store_16(request, 3, end_handle);
+    little_endian_store_16_fuzz(TAG_GATT_START_HANDLE, request, 1, start_handle);
+    little_endian_store_16_fuzz(TAG_GATT_END_HANDLE, request, 3, end_handle);
     
     l2cap_send_prepared_connectionless(peripheral_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL, 5);
 }
@@ -233,9 +233,9 @@ static void att_find_by_type_value_request(uint16_t request_type, uint16_t attri
     uint8_t * request = l2cap_get_outgoing_buffer();
     
     request[0] = request_type;
-    little_endian_store_16(request, 1, start_handle);
-    little_endian_store_16(request, 3, end_handle);
-    little_endian_store_16(request, 5, attribute_group_type);
+    little_endian_store_16_fuzz(TAG_GATT_ATTR_START_HANDLE, request, 1, start_handle);
+    little_endian_store_16_fuzz(TAG_GATT_ATTR_END_HANDLE, request, 3, end_handle);
+    little_endian_store_16_fuzz(TAG_GATT_ATTR_GROUP_TYPE, request, 5, attribute_group_type);
     memcpy(&request[7], value, value_size);
     
     l2cap_send_prepared_connectionless(peripheral_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL, 7+value_size);
@@ -246,9 +246,9 @@ static void att_read_by_type_or_group_request_for_uuid16(uint16_t request_type, 
     l2cap_reserve_packet_buffer();
     uint8_t * request = l2cap_get_outgoing_buffer();
     request[0] = request_type;
-    little_endian_store_16(request, 1, start_handle);
-    little_endian_store_16(request, 3, end_handle);
-    little_endian_store_16(request, 5, uuid16);
+    little_endian_store_16_fuzz(TAG_GATT_ATTR_START_HANDLE, request, 1, start_handle);
+    little_endian_store_16_fuzz(TAG_GATT_ATTR_END_HANDLE, request, 3, end_handle);
+    little_endian_store_16_fuzz(TAG_GATT_UUID, request, 5, uuid16);
     
     l2cap_send_prepared_connectionless(peripheral_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL, 7);
 }
@@ -270,7 +270,7 @@ static void att_read_request(uint16_t request_type, uint16_t peripheral_handle, 
     l2cap_reserve_packet_buffer();
     uint8_t * request = l2cap_get_outgoing_buffer();
     request[0] = request_type;
-    little_endian_store_16(request, 1, attribute_handle);
+    little_endian_store_16_fuzz(TAG_GATT_ATTR_HANDLE, request, 1, attribute_handle);
     
     l2cap_send_prepared_connectionless(peripheral_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL, 3);
 }
@@ -280,12 +280,13 @@ static void att_read_blob_request(uint16_t request_type, uint16_t peripheral_han
     l2cap_reserve_packet_buffer();
     uint8_t * request = l2cap_get_outgoing_buffer();
     request[0] = request_type;
-    little_endian_store_16(request, 1, attribute_handle);
-    little_endian_store_16(request, 3, value_offset);
+    little_endian_store_16_fuzz(TAG_GATT_ATTR_HANDLE, request, 1, attribute_handle);
+    little_endian_store_16_fuzz(TAG_GATT_VALUE_OFFSET, request, 3, value_offset);
     
-    l2cap_send_prepared_connectionless(peripheral_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL, 5);
+    l2cap_send_prepared_connectionless(peripheral`_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL, 5);
 }
 
+// [FUZZ] Should there be a length field here?
 static void att_read_multiple_request(uint16_t peripheral_handle, uint16_t num_value_handles, uint16_t * value_handles){
     l2cap_reserve_packet_buffer();
     uint8_t * request = l2cap_get_outgoing_buffer();
@@ -350,7 +351,7 @@ static void att_exchange_mtu_request(uint16_t peripheral_handle){
     l2cap_reserve_packet_buffer();
     uint8_t * request = l2cap_get_outgoing_buffer();
     request[0] = ATT_EXCHANGE_MTU_REQUEST;
-    little_endian_store_16(request, 1, mtu);
+    little_endian_store_16_fuzz(TAG_GATT_MTU, request, 1, mtu);
     l2cap_send_prepared_connectionless(peripheral_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL, 3);
 }
 
