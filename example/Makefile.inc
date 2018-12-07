@@ -152,6 +152,7 @@ EXAMPLES = 					\
 	spp_counter 			\
 	spp_streamer			\
 	spp_streamer_client     \
+	sdp_l2cap_scan			\
 
 EXAMPLES_USING_LE =			\
 	ancs_client_demo		\
@@ -249,6 +250,9 @@ spp_flowcontrol: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} ${SDP_CLIENT} spp_flow
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
 
 spp_streamer_client: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} spp_streamer_client.c
+	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
+
+sdp_l2cap_scan: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} ${SDP_CLIENT} sdp_l2cap_scan.c
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
 
 gap_dedicated_bonding: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} gap_dedicated_bonding.c

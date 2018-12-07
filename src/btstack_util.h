@@ -102,6 +102,10 @@ uint32_t little_endian_read_32(const uint8_t * buffer, int position);
 
 // [FUZZ] Fuzzing functions
 
+#define FUZZ_HCI_LAYER 0
+#define FUZZ_L2CAP_LAYER 0
+#define FUZZ_SDP_LAYER 0
+
 #define SHOULD_FUZZ_LENGTH 0
 
 #define TAG_L2CAP_LEN 1

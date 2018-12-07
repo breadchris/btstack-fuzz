@@ -9,7 +9,7 @@
 #include <syslog.h>
 #include <stdarg.h>
 
-#define FUZZ 1
+uint8_t *get_bdaddr(char *str);
 
 void fuzz(uint8_t *data, uint16_t len);
 void byteflip(uint8_t *data, uint16_t len);

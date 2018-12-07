@@ -101,15 +101,17 @@ uint16_t uint16_fuzz_values[] = {
     0xff00
 };
 
+#define FUZZ_ODDS 20
+
 uint8_t uint8_fuzz(uint64_t tag, uint8_t value) {
-    if (SHOULD_FUZZ_LENGTH == 1) {
+    if (SHOULD_FUZZ_LENGTH == 1 && (rand() % 100 < FUZZ_ODDS)) {
         value = uint8_fuzz_values[rand() % (sizeof(uint8_fuzz_values) / sizeof(uint8_t))];
     }
     return value;
 }
 
 void little_endian_store_16_fuzz(uint64_t tag, uint8_t *buffer, uint16_t pos, uint16_t value) {
-    if (SHOULD_FUZZ_LENGTH == 1) {
+    if (SHOULD_FUZZ_LENGTH == 1 && (rand() % 100 < FUZZ_ODDS)) {
         value = uint16_fuzz_values[rand() % (sizeof(uint16_fuzz_values) / sizeof(uint16_t))];
     }
     little_endian_store_16(buffer, pos, value);
