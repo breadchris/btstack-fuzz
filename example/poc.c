@@ -119,13 +119,6 @@ int btstack_main(int argc, const char * argv[]){
     (void)argc;
     (void)argv;
 
-/*
-    if (argc != 2) {
-        printf("%d <bd addr>\n", argc);
-        exit(-1);
-    }
-    */
-
     if (!sscanf_bd_addr("98:01:A7:9D:C1:94", remote)) {
         printf("%s <bd addr>\n", argv[0]);
         exit(-1);

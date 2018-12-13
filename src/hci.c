@@ -668,9 +668,6 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection){
         const int size = current_acl_data_packet_length + 4;
 
         // [FUZZ] Fuzz on `packet` here (perhaps only limit fuzzing to header?)
-        // [FUZZ] Byte flip outgoing hci traffic
-        // TODO: Make this fuzzing unlikely since we are already fuzzing at higher levels?
-        fuzz(packet, size);
         hci_dump_packet(HCI_ACL_DATA_PACKET, 0, packet, size);
 
         err = hci_stack->hci_transport->send_packet(HCI_ACL_DATA_PACKET, packet, size);

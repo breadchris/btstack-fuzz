@@ -283,7 +283,7 @@ static void att_read_blob_request(uint16_t request_type, uint16_t peripheral_han
     little_endian_store_16_fuzz(TAG_GATT_ATTR_HANDLE, request, 1, attribute_handle);
     little_endian_store_16_fuzz(TAG_GATT_VALUE_OFFSET, request, 3, value_offset);
     
-    l2cap_send_prepared_connectionless(peripheral`_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL, 5);
+    l2cap_send_prepared_connectionless(peripheral_handle, L2CAP_CID_ATTRIBUTE_PROTOCOL, 5);
 }
 
 // [FUZZ] Should there be a length field here?

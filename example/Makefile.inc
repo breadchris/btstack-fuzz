@@ -153,6 +153,7 @@ EXAMPLES = 					\
 	spp_streamer			\
 	spp_streamer_client     \
 	sdp_l2cap_scan			\
+	poc                     \
 
 EXAMPLES_USING_LE =			\
 	ancs_client_demo		\
@@ -265,6 +266,9 @@ gap_link_keys: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} gap_link_keys.c
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
 
 panu_demo: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} ${SDP_CLIENT} panu_demo.c
+	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
+
+poc: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} ${SDP_CLIENT} poc.c
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
 
 gatt_browser: gatt_browser.h ${CORE_OBJ} ${COMMON_OBJ} ${ATT_OBJ} ${GATT_CLIENT_OBJ} ${GATT_SERVER_OBJ} ${SM_OBJ} gatt_browser.c

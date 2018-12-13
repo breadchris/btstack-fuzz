@@ -97,7 +97,7 @@ static void sdp_client_init(void){
  */ 
 
 /* LISTING_START(Remote): Address of remote device in big-endian order */
-static bd_addr_t remote = {0x98,0x01,0xA7,0x9D,0xC1,0x94};
+static bd_addr_t remote = {0x00,0x1A,0x7D,0xDA,0x71,0x13};
 /* LISTING_END */
 
 /* LISTING_START(SDPQueryUUID): Querying a list of service records on a remote device. */
@@ -167,8 +167,8 @@ static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel
                 printf("SDP query failed 0x%02x\n", sdp_event_query_complete_get_status(packet));
             } 
             printf("SDP query done.\n");
-            sleep(1);
-            sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
+            //sleep(1);
+            //sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
             break;
     }
 }
