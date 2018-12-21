@@ -66,8 +66,7 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
         case BTSTACK_EVENT_STATE:
             // BTstack activated, get started 
             if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING){
-                //sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
-                do_l2cap_connect();
+                sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
             }
             break;
         default:
@@ -79,6 +78,64 @@ static void assertBuffer(int size){
     if (size > attribute_value_buffer_size){
         printf("SDP attribute value buffer size exceeded: available %d, required %d", attribute_value_buffer_size, size);
     }
+}
+
+static int sdp_traverse_response(uint8_t * element, de_type_t de_type, de_size_t de_size, void *my_context){
+    int indent = *(int*) my_context;
+    int i;
+    for (i=0; i<indent;i++) printf("    ");
+    unsigned int pos     = de_get_header_size(element);
+    unsigned int end_pos = de_get_len(element);
+    printf("type %5s (%u), element len %2u ", type_names[de_type], de_type, end_pos);
+    if (de_type == DE_DES) {
+        printf("\n");
+        indent++;
+        sdp_traverse_response(element, de_traversal_dump_data, (void *)&indent);
+    } else if (de_type == DE_UUID && de_size == DE_SIZE_128) {
+        printf(", value: %s\n", uuid128_to_str(element+1));
+    } else if (de_type == DE_STRING) {
+        unsigned int len = 0;
+        switch (de_size){
+            case DE_SIZE_VAR_8:
+                len = element[1];
+                break;
+            case DE_SIZE_VAR_16:
+                len = big_endian_read_16(element, 1);
+                break;
+            default:
+                break;
+        }
+        printf("len %u (0x%02x)\n", len, len);
+        printf_hexdump(&element[pos], len);
+    } else {
+        uint32_t value = 0;
+        switch (de_size) {
+            case DE_SIZE_8:
+                if (de_type != DE_NIL){
+                    value = element[pos];
+                }
+                break;
+            case DE_SIZE_16:
+                value = big_endian_read_16(element,pos);
+                break;
+            case DE_SIZE_32:
+                value = big_endian_read_32(element,pos);
+                break;
+            default:
+                break;
+        }
+        printf(", value: 0x%08" PRIx32 "\n", value);
+    }
+    return 0;
+}
+
+static void print_sdp_results(const uint8_t * record);
+static void print_sdp_results(const uint8_t * record){
+    int indent = 0;
+    // hack to get root DES, too.
+    de_type_t type = de_get_element_type(record);
+    de_size_t size = de_get_size_type(record);
+    sdp_traverse_response((uint8_t *) record, type, size, (void*) &indent);
 }
 
 static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){

