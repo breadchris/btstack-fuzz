@@ -160,6 +160,7 @@ void big_endian_store_16_fuzz(uint64_t tag, uint8_t *buffer, uint16_t pos, uint1
  * @param value
  */
 void little_endian_store_16(uint8_t *buffer, uint16_t position, uint16_t value);
+void little_endian_store_24(uint8_t *buffer, uint16_t position, uint32_t value);
 void little_endian_store_32(uint8_t *buffer, uint16_t position, uint32_t value);
 
 /** 
