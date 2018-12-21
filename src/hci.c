@@ -77,7 +77,6 @@
 #include "hci_cmd.h"
 #include "hci_dump.h"
 #include "ad_parser.h"
-#include "fuzz.h"
 
 #ifdef ENABLE_HCI_CONTROLLER_TO_HOST_FLOW_CONTROL
 #ifndef HCI_HOST_ACL_PACKET_NUM

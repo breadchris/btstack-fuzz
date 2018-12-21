@@ -1,3 +1,0 @@
-/* 
-Fuzz the continuation frame for SDP
-*/

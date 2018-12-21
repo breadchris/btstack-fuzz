@@ -22,3 +22,5 @@ SRC_FILES = \
     hci_transport_h5.c \
     l2cap.c \
     l2cap_signaling.c \
+    radamsa.c \
+    radamsa_main.c \

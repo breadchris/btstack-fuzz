@@ -52,7 +52,6 @@
 #include "btstack_debug.h"
 #include "btstack_event.h"
 #include "btstack_memory.h"
-#include "fuzz.h"
 
 #include <stdarg.h>
 #include <string.h>
