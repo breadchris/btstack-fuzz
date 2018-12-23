@@ -49,6 +49,8 @@
 #include "btstack_debug.h"
 #include "btstack_util.h"
 
+#include "radamsa.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -102,6 +104,12 @@ uint16_t uint16_fuzz_values[] = {
 };
 
 #define FUZZ_ODDS 20
+
+void maybe_fuzz_data(uint64_t tag, uint8_t *data, size_t len) {
+    if (SHOULD_FUZZ_ALL_DATA) {
+        radamsa_fuzz(data, len);
+    }
+}
 
 uint8_t uint8_fuzz(uint64_t tag, uint8_t value) {
     if (SHOULD_FUZZ_LENGTH == 1 && (rand() % 100 < FUZZ_ODDS)) {

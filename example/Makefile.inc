@@ -33,7 +33,9 @@ CORE += \
 	btstack_util.c 	            \
 
 COMMON += \
-	fuzz.c                      \
+	vec.c                       \
+	radamsa.c                   \
+	radamsa_main.c              \
 	ad_parser.c                 \
 	hci.c			            \
 	hci_cmd.c		            \
@@ -122,6 +124,7 @@ EXAMPLES = 					\
 	gap_dedicated_bonding	\
 	gap_inquiry 			\
 	gap_le_advertisements   \
+	gap_le_search           \
 	gap_link_keys           \
 	gatt_battery_query      \
 	gatt_browser            \
@@ -163,6 +166,7 @@ EXAMPLES = 					\
 EXAMPLES_USING_LE =			\
 	ancs_client_demo		\
 	gap_le_advertisements   \
+	gap_le_search           \
 	gatt_battery_query      \
 	gatt_browser			\
 	hog_keyboard_demo       \
@@ -261,9 +265,6 @@ spp_flowcontrol: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} ${SDP_CLIENT} spp_flow
 spp_streamer_client: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} spp_streamer_client.c
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
 
-sdp_l2cap_scan: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} ${SDP_CLIENT} sdp_l2cap_scan.c
-	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
-
 gap_dedicated_bonding: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} gap_dedicated_bonding.c
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
 
@@ -274,6 +275,9 @@ gap_link_keys: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} gap_link_keys.c
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
 
 panu_demo: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} ${SDP_CLIENT} panu_demo.c
+	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
+
+sdp_l2cap_scan: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} ${SDP_CLIENT} sdp_l2cap_scan.c
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
 
 poc: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} ${SDP_CLIENT} poc.c
@@ -292,6 +296,9 @@ led_counter: ${CORE_OBJ} ${COMMON_OBJ} led_counter.c
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
 
 gap_le_advertisements: ${CORE_OBJ} ${COMMON_OBJ} ${SM_OBJ}  gap_le_advertisements.c
+	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
+
+gap_le_search: ${CORE_OBJ} ${COMMON_OBJ} ${SM_OBJ}  gap_le_search.c
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
 
 hsp_hs_demo: ${CORE_OBJ} ${COMMON_OBJ} ${CLASSIC_OBJ} ${SDP_CLIENT} ${SBC_DECODER_OBJ} ${SBC_ENCODER_OBJ} ${CVSD_PLC_OBJ} wav_util.o sco_demo_util.o btstack_ring_buffer.o hsp_hs.o hsp_hs_demo.c

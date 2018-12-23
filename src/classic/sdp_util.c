@@ -304,7 +304,6 @@ void des_iterator_next(des_iterator_t * it){
 }
 
 // MARK: DataElementSequence traversal
-typedef int (*de_traversal_callback_t)(uint8_t * element, de_type_t type, de_size_t size, void *context);
 static void de_traverse_sequence(uint8_t * element, de_traversal_callback_t handler, void *context){
     de_type_t type = de_get_element_type(element);
     if (type != DE_DES) return;

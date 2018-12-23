@@ -77,6 +77,7 @@ typedef enum {
 void      de_dump_data_element(const uint8_t * record);
 int       de_get_len(const uint8_t * header);
 
+typedef int (*de_traversal_callback_t)(uint8_t * element, de_type_t type, de_size_t size, void *context);
 
 // @note returned "string" is not NULL terminated
 const uint8_t * de_get_string(const uint8_t * element);

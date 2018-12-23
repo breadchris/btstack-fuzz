@@ -858,6 +858,7 @@ int l2cap_send_prepared_connectionless(hci_con_handle_t con_handle, uint16_t cid
     l2cap_setup_header(acl_buffer, con_handle, 0, cid, len);
 
     // [FUZZ] Byte flip outgoing l2cap le traffic
+    maybe_fuzz_data(TAG_ENTIRE_L2CAP_DATA, acl_buffer, len + 8);
 
     return hci_send_acl_packet_buffer(len+8);
 }
@@ -1120,6 +1121,9 @@ static int l2cap_send_signaling_packet(hci_con_handle_t handle, L2CAP_SIGNALING_
     va_start(argptr, identifier);
     uint16_t len = l2cap_create_signaling_classic(acl_buffer, handle, cmd, identifier, argptr);
     va_end(argptr);
+    // [FUZZ] Fuzz l2cap signaling packet
+    maybe_fuzz_data(TAG_ENTIRE_L2CAP_SIGNALING_DATA, acl_buffer, len);
+
     // log_info("l2cap_send_signaling_packet con %u!", handle);
     return hci_send_acl_packet_buffer(len);
 }
@@ -1168,6 +1172,7 @@ int l2cap_send_prepared(uint16_t local_cid, uint16_t len){
 #endif
 
     // [FUZZ] Packet data is stored in: l2cap_reserve_packet_buffer want to fuzz this
+    maybe_fuzz_data(TAG_ENTIRE_L2CAP_DATA, acl_buffer, len+8+fcs_size);
 
     // send
     return hci_send_acl_packet_buffer(len+8+fcs_size);
@@ -1233,6 +1238,10 @@ static int l2cap_send_le_signaling_packet(hci_con_handle_t handle, L2CAP_SIGNALI
     va_start(argptr, identifier);
     uint16_t len = l2cap_create_signaling_le(acl_buffer, handle, cmd, identifier, argptr);
     va_end(argptr);
+
+    // [FUZZ] Fuzz le signaling packet
+    maybe_fuzz_data(TAG_ENTIRE_L2CAP_LE_SIGNALING_DATA, acl_buffer, len);
+
     // log_info("l2cap_send_le_signaling_packet con %u!", handle);
     return hci_send_acl_packet_buffer(len);
 }

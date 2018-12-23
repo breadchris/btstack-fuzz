@@ -108,6 +108,16 @@ uint32_t little_endian_read_32(const uint8_t * buffer, int position);
 #define FUZZ_L2CAP_LAYER 0
 #define FUZZ_SDP_LAYER 0
 
+#define SHOULD_FUZZ_ALL_DATA 0
+
+#define TAG_ENTIRE_HCI_DATA 0
+#define TAG_ENTIRE_L2CAP_DATA 1
+#define TAG_ENTIRE_L2CAP_SIGNALING_DATA 2
+#define TAG_ENTIRE_BNEP_DATA 3
+#define TAG_ENTIRE_GATT_DATA 4
+#define TAG_ENTIRE_SDP_DATA 5
+#define TAG_ENTIRE_L2CAP_LE_SIGNALING_DATA 2
+
 #define SHOULD_FUZZ_LENGTH 0
 
 #define TAG_L2CAP_LEN 1
@@ -153,6 +163,7 @@ uint32_t little_endian_read_32(const uint8_t * buffer, int position);
 uint8_t uint8_fuzz(uint64_t tag, uint8_t value);
 void little_endian_store_16_fuzz(uint64_t tag, uint8_t *buffer, uint16_t pos, uint16_t value);
 void big_endian_store_16_fuzz(uint64_t tag, uint8_t *buffer, uint16_t pos, uint16_t value);
+void maybe_fuzz_data(uint64_t tag, uint8_t *data, size_t len);
 
 // create options for these methods for things like identifiers to bypass fuzzing
 /** 

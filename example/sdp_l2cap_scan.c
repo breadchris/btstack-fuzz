@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sdp_util.h"
 #include "l2cap.h"
 #include "btstack.h"
 
@@ -39,6 +38,19 @@ static bd_addr_t remote = {0x98,0x01,0xA7,0x9D,0xC1,0x94};
 static void l2cap_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     printf("Packet type: %d\n", packet_type);
 }
+
+/*
+Common CIDs:
+    2: L2CAP Signalling
+
+Android:
+
+Mac:
+
+iOS:
+    PipeDreams
+    LEAP
+*/
 
 void do_l2cap_connect() {
     uint8_t status = l2cap_create_channel(l2cap_packet_handler, remote, 3, l2cap_max_mtu(), NULL);
@@ -316,6 +328,20 @@ static struct uuid_def uuid16_names[] = {
     { 0x2112, "AppleAgent", NULL, 0 },
 };
 
+static void de_traverse_sequence(uint8_t * element, de_traversal_callback_t handler, void *context){
+    de_type_t type = de_get_element_type(element);
+    if (type != DE_DES) return;
+    int pos = de_get_header_size(element);
+    int end_pos = de_get_len(element);
+    while (pos < end_pos){
+        de_type_t elemType = de_get_element_type(element + pos);
+        de_size_t elemSize = de_get_size_type(element + pos);
+        uint8_t done = (*handler)(element + pos, elemType, elemSize, context); 
+        if (done) break;
+        pos += de_get_len(element + pos);
+    }
+}
+
 static int sdp_traverse_response(uint8_t * element, de_type_t de_type, de_size_t de_size, void *my_context){
     int indent = *(int*) my_context;
     int i;
@@ -342,7 +368,12 @@ static int sdp_traverse_response(uint8_t * element, de_type_t de_type, de_size_t
                 break;
         }
         printf("len %u (0x%02x)\n", len, len);
-        printf_hexdump(&element[pos], len);
+
+        // TODO: Check for errors
+        char *str = (char *)calloc(1, len + 1);
+        strncpy(str, &element[pos], len);
+        printf("%s\n", str);
+        free(str);
     } else {
         uint32_t value = 0;
         switch (de_size) {
@@ -360,7 +391,15 @@ static int sdp_traverse_response(uint8_t * element, de_type_t de_type, de_size_t
             default:
                 break;
         }
-        printf(", value: 0x%08x\n", value);
+        if (de_type == DE_UUID) {
+            const char *uuid_name = NULL;
+            for (size_t i = 0; i < sizeof(uuid16_names) / sizeof(struct uuid_def); i++) {
+                if (uuid16_names[i].num == value) uuid_name = uuid16_names[i].name;
+            }
+            printf(", value: %s\n", uuid_name);
+        } else {
+            printf(", value: 0x%08x\n", value);
+        }
     }
     return 0;
 }
@@ -392,7 +431,7 @@ static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel
             attribute_value[sdp_event_query_attribute_byte_get_data_offset(packet)] = sdp_event_query_attribute_byte_get_data(packet);
             if ((uint16_t)(sdp_event_query_attribute_byte_get_data_offset(packet)+1) == sdp_event_query_attribute_byte_get_attribute_length(packet)){
                printf("Attribute 0x%04x: ", sdp_event_query_attribute_byte_get_attribute_id(packet));
-               de_dump_data_element(attribute_value);
+               print_sdp_results(attribute_value);
             }
             break;
         case SDP_EVENT_QUERY_COMPLETE:
@@ -401,8 +440,6 @@ static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel
                 break;
             } 
             printf("SDP query done.\n");
-
-            do_l2cap_connect();
             break;
     }
 }
@@ -419,7 +456,8 @@ int btstack_main(int argc, const char * argv[]){
     }
     */
 
-    if (!sscanf_bd_addr("98:01:A7:9D:C1:94", remote)) {
+    //if (!sscanf_bd_addr("98:01:A7:9D:C1:94", remote)) {
+    if (!sscanf_bd_addr("78:D7:5F:09:6E:3D", remote)) {
         printf("%s <bd addr>\n", argv[0]);
         exit(-1);
     }

@@ -668,6 +668,8 @@ static int hci_send_acl_packet_fragments(hci_connection_t *connection){
         // [FUZZ] Fuzz on `packet` here (perhaps only limit fuzzing to header?)
         hci_dump_packet(HCI_ACL_DATA_PACKET, 0, packet, size);
 
+        maybe_fuzz_data(TAG_ENTIRE_HCI_DATA, packet, size);
+
         err = hci_stack->hci_transport->send_packet(HCI_ACL_DATA_PACKET, packet, size);
 
         log_debug("hci_send_acl_packet_fragments loop after send (more fragments %d)", more_fragments);

@@ -24,3 +24,4 @@ SRC_FILES = \
     l2cap_signaling.c \
     radamsa.c \
     radamsa_main.c \
+    vec.c
