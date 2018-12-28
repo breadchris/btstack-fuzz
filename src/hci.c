@@ -2644,6 +2644,8 @@ void hci_init(const hci_transport_t *transport, const void *config){
     hci_stack->master_slave_policy = 1;
 #endif
 
+    // [TODO] Trace these out to see how we can remotely known about them from a target
+
     // Secure Simple Pairing default: enable, no I/O capabilities, general bonding, mitm not required, auto accept 
     hci_stack->ssp_enable = 1;
     hci_stack->ssp_io_capability = SSP_IO_CAPABILITY_NO_INPUT_NO_OUTPUT;
