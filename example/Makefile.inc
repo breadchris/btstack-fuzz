@@ -33,7 +33,7 @@ CORE += \
 	btstack_util.c 	            \
 
 COMMON += \
-	vec.c                       \
+	vector.c                    \
 	radamsa.c                   \
 	radamsa_main.c              \
 	ad_parser.c                 \

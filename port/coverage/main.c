@@ -57,13 +57,15 @@
 #include "btstack_memory.h"
 #include "btstack_run_loop.h"
 #include "btstack_run_loop_posix.h"
-#include "hal_led.h"
 #include "hci.h"
 #include "hci_dump.h"
 #include "btstack_stdin.h"
 #include "btstack_audio.h"
 #include "btstack_tlv_posix.h"
 #include "hci_transport.h"
+#include "vector.h"
+#include <pthread.h>
+#include <semaphore.h>
 
 #define TLV_DB_PATH_PREFIX "/tmp/btstack_"
 #define TLV_DB_PATH_POSTFIX ".tlv"
@@ -79,6 +81,8 @@ static const hci_transport_t * transport;
 int btstack_main(int argc, const char * argv[]);
 
 static btstack_packet_callback_registration_t hci_event_callback_registration;
+
+vector *bt_packet_queue = NULL;
 
 static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
     UNUSED(channel);
@@ -145,79 +149,128 @@ static void intel_firmware_done(int result){
     btstack_main(main_argc, main_argv);
 }
 
-static int cov_usb_open(void){
+static int cov_open(void){
+    return 0;
 }
 
-static int cov_usb_close(void){
+static int cov_close(void){
+    return 0;
+}
+
+static void dummy_handler(uint8_t packet_type, uint8_t *packet, uint16_t size); 
+static void (*cov_packet_handler)(uint8_t packet_type, uint8_t *packet, uint16_t size) = dummy_handler;
+
+static void dummy_handler(uint8_t packet_type, uint8_t *packet, uint16_t size) {
+    UNUSED(packet_type);
+    UNUSED(packet);
+    UNUSED(size);
+}
+
+static void cov_register_packet_handler(void (*handler)(uint8_t packet_type, uint8_t *packet, uint16_t size)){
+    log_info("registering packet handler");
+    cov_packet_handler = handler;
+}
+
+static int cov_can_send_packet_now(uint8_t packet_type) {
+    return 1;
+}
+
+struct bt_packet_t {
+    uint8_t packet_type;
+    uint8_t *packet;
+    int size;
+} bt_packet;
+
+pthread_mutex_t bt_packet_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+sem_t bt_packet_queue_sem;
+
+static int cov_send_packet(uint8_t packet_type, uint8_t * packet, int size) {
+    // TODO: Queue packet to be read
+    struct bt_packet_t *queue_packet = calloc(1, sizeof(struct bt_packet_t));
+    queue_packet->packet_type = packet_type;
+    queue_packet->packet = calloc(size, sizeof(uint8_t));
+    memcpy(queue_packet->packet, packet, size);
+    queue_packet->size = size;
+
+    pthread_mutex_lock(&bt_packet_queue_mutex);
+    vector_append(bt_packet_queue, queue_packet);
+    pthread_mutex_unlock(&bt_packet_queue_mutex);
+
+    sem_post(&bt_packet_queue_sem);
+
+    return 0;
+}
+
+static void cov_set_sco_config(uint16_t voice_setting, int num_connections){
+}
+
+void *recv_packets();
+void *recv_packets() {
+    // TODO: While there are packets in the queue
+    struct bt_packet_t *queue_packet = NULL;
+
+    while (1) {
+        sem_wait(&bt_packet_queue_sem);
+
+        if (vector_count(bt_packet_queue) == 0) {
+            printf("wut?");
+        }
+
+        pthread_mutex_lock(&bt_packet_queue_mutex);
+        vector_delete(bt_packet_queue, 0, (void **)&queue_packet);
+        pthread_mutex_unlock(&bt_packet_queue_mutex);
+
+        cov_packet_handler(queue_packet->packet_type, queue_packet->packet, queue_packet->size);
+
+        free(queue_packet->packet);
+        free(queue_packet);
+    }
+
+    return NULL;
 }
 
 // single instance
-static hci_transport_t * hci_transport_usb = NULL;
+static hci_transport_t * hci_transport_cov = NULL;
 
-const hci_transport_t * hci_transport_usb_instance(void) {
-    if (!hci_transport_usb) {
-        hci_transport_usb = (hci_transport_t*) malloc( sizeof(hci_transport_t));
-        memset(hci_transport_usb, 0, sizeof(hci_transport_t));
-        hci_transport_usb->name                          = "H2_LIBUSB";
-        hci_transport_usb->open                          = usb_open;
-        hci_transport_usb->close                         = usb_close;
-        hci_transport_usb->register_packet_handler       = usb_register_packet_handler;
-        hci_transport_usb->can_send_packet_now           = usb_can_send_packet_now;
-        hci_transport_usb->send_packet                   = usb_send_packet;
+const hci_transport_t * hci_transport_cov_instance(void) {
+    if (!hci_transport_cov) {
+        hci_transport_cov = (hci_transport_t*) malloc( sizeof(hci_transport_t));
+        memset(hci_transport_cov, 0, sizeof(hci_transport_t));
+        hci_transport_cov->name                          = "COVERAGE";
+        hci_transport_cov->open                          = cov_open;
+        hci_transport_cov->close                         = cov_close;
+        hci_transport_cov->register_packet_handler       = cov_register_packet_handler;
+        hci_transport_cov->can_send_packet_now           = cov_can_send_packet_now;
+        hci_transport_cov->send_packet                   = cov_send_packet;
 #ifdef ENABLE_SCO_OVER_HCI
-        hci_transport_usb->set_sco_config                = usb_set_sco_config;
+        hci_transport_cov->set_sco_config                = cov_set_sco_config;
 #endif
     }
-    return hci_transport_usb;
+    return hci_transport_cov;
 }
 
-#define USB_MAX_PATH_LEN 7
 int main(int argc, const char * argv[]){
+    pthread_t bt_packet_queue_thread;
 
-    uint8_t usb_path[USB_MAX_PATH_LEN];
-    int usb_path_len = 0;
-    const char * usb_path_string = NULL;
-    if (argc >= 3 && strcmp(argv[1], "-u") == 0){
-        // parse command line options for "-u 11:22:33"
-        usb_path_string = argv[2];
-        printf("Specified USB Path: ");
-        while (1){
-            char * delimiter;
-            int port = strtol(usb_path_string, &delimiter, 16);
-            usb_path[usb_path_len] = port;
-            usb_path_len++;
-            printf("%02x ", port);
-            if (!delimiter) break;
-            if (*delimiter != ':' && *delimiter != '-') break;
-            usb_path_string = delimiter+1;
-        }
-        printf("\n");
-        argc -= 2;
-        memmove(&argv[1], &argv[3], (argc-1) * sizeof(char *));
-    }
-
-	/// GET STARTED with BTstack ///
 	btstack_memory_init();
     btstack_run_loop_init(btstack_run_loop_posix_get_instance());
-	    
-    if (usb_path_len){
-        hci_transport_usb_set_path(usb_path_len, usb_path);
-    }
+
+    hci_init(hci_transport_cov_instance(), NULL);
 
     // use logger: format HCI_DUMP_PACKETLOGGER, HCI_DUMP_BLUEZ or HCI_DUMP_STDOUT
 
     char pklg_path[100];
     strcpy(pklg_path, "/tmp/hci_dump");
-    if (usb_path_len){
-        strcat(pklg_path, "_");
-        strcat(pklg_path, usb_path_string);
-    }
-    strcat(pklg_path, ".pklg");
+    strcat(pklg_path, "coverage.pklg");
     printf("Packet Log: %s\n", pklg_path);
     hci_dump_open(pklg_path, HCI_DUMP_PACKETLOGGER);
 
-    // setup USB Transport
-    transport = hci_transport_usb_instance();
+    hci_event_callback_registration.callback = &packet_handler;
+    hci_add_event_handler(&hci_event_callback_registration);
+
+    vector_alloc(&bt_packet_queue);
+    sem_init(&bt_packet_queue_sem, 0, 1); 
+    pthread_create(&bt_packet_queue_thread, NULL, recv_packets, NULL);
 
     // handle CTRL-c
     signal(SIGINT, sigint_handler);

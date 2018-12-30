@@ -10,7 +10,7 @@ static struct X {
   size_t input_index;
 
   // Set of objects that remain unfreed by Radamsa.
-  void** allocations;
+  vector *allocations;
 
 } g_radamsa;
 
@@ -42,14 +42,16 @@ ssize_t radamsa_write(int val, uint8_t *buff, size_t buff_size) {
 // Interposes on `malloc`s performed by Radamsa.
 void *radamsa_malloc(size_t size) {
   void *ptr = malloc(size);
-  vec_push(g_radamsa.allocations, ptr);
+  vector_append(g_radamsa.allocations, ptr);
   return ptr;
 }
 
 void find_and_remove_alloc(void *ptr) {
-  for (size_t i = 0; i < vec_len(g_radamsa.allocations); i++) {
-    if (g_radamsa.allocations[i] == ptr) {
-      vec_remove(g_radamsa.allocations, i);
+  void *alloc_ptr;
+  for (size_t i = 0; i < vector_count(g_radamsa.allocations); i++) {
+    vector_get(g_radamsa.allocations, i, &alloc_ptr);
+    if (alloc_ptr == ptr) {
+      vector_delete(g_radamsa.allocations, i, NULL);
       free(ptr);
     }
   }
@@ -65,7 +67,7 @@ void radamsa_free(void *ptr) {
 void *radamsa_realloc(void *ptr, size_t size) {
   find_and_remove_alloc(ptr);
   ptr = realloc(ptr, size);
-  vec_push(g_radamsa.allocations, ptr);
+  vector_append(g_radamsa.allocations, ptr);
   return ptr;
 }
 
@@ -78,7 +80,7 @@ void radamsa_fuzz(uint8_t *input, size_t len) {
   if (!g_radamsa.output) {
     return;
   }
-  g_radamsa.allocations = vec_new(20);
+  vector_alloc(&g_radamsa.allocations);
 
   char formatted_seed[64] = {0};
   snprintf(formatted_seed, sizeof(formatted_seed), "%zu", g_radamsaSeed);
@@ -95,12 +97,9 @@ void radamsa_fuzz(uint8_t *input, size_t len) {
   // static char array.
   radamsa_boot(6, args);
 
-  for (size_t i = 0; i < vec_len(g_radamsa.allocations); i++) {
-    free(g_radamsa.allocations[i]);
-  }
-
   g_radamsa.input = NULL;
-  vec_free(g_radamsa.allocations);
+  vector_free_contents(g_radamsa.allocations);
+  vector_free(g_radamsa.allocations);
 
   // TODO: Have a way to include length changes too
   memcpy(input, g_radamsa.output, len);

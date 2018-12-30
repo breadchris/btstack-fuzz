@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "vec.h"
+#include "vector.h"
 
 void radamsa_fuzz(uint8_t *input, size_t len);
 ssize_t radamsa_read(int val, uint8_t *buff, size_t buff_size);
