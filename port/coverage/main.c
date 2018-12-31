@@ -185,7 +185,10 @@ pthread_mutex_t bt_packet_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 sem_t bt_packet_queue_sem;
 
 static int cov_send_packet(uint8_t packet_type, uint8_t * packet, int size) {
-    // TODO: Queue packet to be read
+    // TODO: If we are sending out an hci packet, we will have to emulate it within here
+    // for example, a gap inquiry is being peformed, respond with data showing some fake
+    // device as an available one
+
     struct bt_packet_t *queue_packet = calloc(1, sizeof(struct bt_packet_t));
     queue_packet->packet_type = packet_type;
     queue_packet->packet = calloc(size, sizeof(uint8_t));
