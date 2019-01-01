@@ -63,6 +63,7 @@ void do_l2cap_connect() {
     buffer[pos++] = '\xff';
     buffer[pos++] = '\xff';
     buffer[pos++] = '\xff';
+    buffer[pos++] = '\xff';
     int err = l2cap_send_prepared(2, pos);
     printf("Error: %d\n", err);
 }
@@ -349,6 +350,7 @@ static int sdp_traverse_response(uint8_t * element, de_type_t de_type, de_size_t
     unsigned int pos     = de_get_header_size(element);
     unsigned int end_pos = de_get_len(element);
     printf("type %5s (%u), element len %2u ", attrib_names[de_type].name, de_type, end_pos);
+
     if (de_type == DE_DES) {
         printf("\n");
         indent++;
@@ -457,7 +459,8 @@ int btstack_main(int argc, const char * argv[]){
     */
 
     //if (!sscanf_bd_addr("98:01:A7:9D:C1:94", remote)) {
-    if (!sscanf_bd_addr("78:D7:5F:09:6E:3D", remote)) {
+    //if (!sscanf_bd_addr("78:D7:5F:09:6E:3D", remote)) {
+    if (!sscanf_bd_addr("38:CA:DA:85:5F:E1", remote)) {
         printf("%s <bd addr>\n", argv[0]);
         exit(-1);
     }
