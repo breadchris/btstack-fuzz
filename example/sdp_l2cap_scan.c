@@ -50,6 +50,29 @@ Mac:
 iOS:
     PipeDreams
     LEAP
+
+Layers:
+l2cap:
+    things to fuzz: 
+        l2cap retransmission
+
+    methods to call:
+        l2cap_create_signaling_classic with L2CAP_SIGNALING_COMMANDS
+sdp:
+    things to fuzz:
+        sdp continuation
+    methods to call:
+        sdp_client_query_uuid16
+        sdp_client_query_uuid128
+        sdp_client_service_attribute_search
+        sdp_client_service_search
+
+bnep --> pan
+avdtp --> a2dp
+avctp --> avrcp
+gatt/att
+smp
+rfcomm
 */
 
 void do_l2cap_connect() {
@@ -460,7 +483,8 @@ int btstack_main(int argc, const char * argv[]){
 
     //if (!sscanf_bd_addr("98:01:A7:9D:C1:94", remote)) {
     //if (!sscanf_bd_addr("78:D7:5F:09:6E:3D", remote)) {
-    if (!sscanf_bd_addr("38:CA:DA:85:5F:E1", remote)) {
+    //if (!sscanf_bd_addr("38:CA:DA:85:5F:E1", remote)) {
+    if (!sscanf_bd_addr("18:56:80:04:42:72", remote)) {
         printf("%s <bd addr>\n", argv[0]);
         exit(-1);
     }
