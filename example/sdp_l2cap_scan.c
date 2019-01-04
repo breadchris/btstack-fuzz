@@ -68,11 +68,18 @@ sdp:
         sdp_client_service_search
 
 bnep --> pan
+    things to fuzz:
+        extension bit
+    methods to call:
+        bnep_send(bnep_cid, (uint8_t*) network_buffer, network_buffer_len);
+        btstack_network_packet_sent();
 avdtp --> a2dp
 avctp --> avrcp
 gatt/att
 smp
 rfcomm
+
+also interesting to think about the attack scenario when a device gets data from us (e.g. sdp query, gatt browse, etc.)
 */
 
 void do_l2cap_connect() {
