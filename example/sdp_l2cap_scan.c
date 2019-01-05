@@ -76,6 +76,12 @@ bnep --> pan
 avdtp --> a2dp
 avctp --> avrcp
 gatt/att
+    things to fuzz:
+        osx will query the target device, can return some bogus data
+        mike ryan had that thing in his pre
+    methods to call:
+        query shit
+        response shit
 smp
 rfcomm
 
