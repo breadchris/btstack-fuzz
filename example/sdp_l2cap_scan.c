@@ -80,7 +80,16 @@ gatt/att
         osx will query the target device, can return some bogus data
         mike ryan had that thing in his pre
     methods to call:
-        query shit
+        send_gatt_services_request
+        send_gatt_by_uuid_request
+        send_gatt_included_service_uuid_request
+        send_gatt_included_service_request
+        send_gatt_characteristic_request
+        send_gatt_characteristic_descriptor_request
+        send_gatt_read_characteristic_value_request
+        send_gatt_read_by_type_request
+        send_gatt_write_attribute_value_request
+        send_gatt_write_client_characteristic_configuration_request
         response shit
 smp
 rfcomm
