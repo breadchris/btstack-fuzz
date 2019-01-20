@@ -212,6 +212,13 @@ void *recv_packets() {
     // TODO: While there are packets in the queue
     struct bt_packet_t *queue_packet = NULL;
 
+    /*
+    TODO: Emulate HCI response
+
+    btstack -> hci command -> queue
+    queue (has sent hci commands) -> lookup sent hci command, parse it, and based on observed hci responses from pcap, send it up the stack
+    */
+
     while (1) {
         sem_wait(&bt_packet_queue_sem);
 
