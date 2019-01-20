@@ -114,32 +114,6 @@ void do_l2cap_connect() {
 }
 
 
-static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    UNUSED(channel);
-    UNUSED(size);
-
-    if (packet_type != HCI_EVENT_PACKET) return;
-    uint8_t event = hci_event_packet_get_type(packet);
-
-    switch (event) {
-        case BTSTACK_EVENT_STATE:
-            // BTstack activated, get started 
-            if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING){
-                sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
-                /*
-                For fuzzing we have:
-                sdp_client_query_uuid16
-                sdp_client_query_uuid128
-                sdp_client_service_attribute_search
-                sdp_client_service_search
-                */
-            }
-            break;
-        default:
-            break;
-    }
-}
-
 static void assertBuffer(int size){
     if (size > attribute_value_buffer_size){
         printf("SDP attribute value buffer size exceeded: available %d, required %d", attribute_value_buffer_size, size);
@@ -460,6 +434,36 @@ static void print_sdp_results(const uint8_t * record){
     sdp_traverse_response((uint8_t *) record, type, size, (void*) &indent);
 }
 
+static void call_sdp_method() {
+    sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
+    /*
+    For fuzzing we have:
+    sdp_client_query_uuid16
+    sdp_client_query_uuid128
+    sdp_client_service_attribute_search
+    sdp_client_service_search
+    */
+}
+
+static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
+    UNUSED(channel);
+    UNUSED(size);
+
+    if (packet_type != HCI_EVENT_PACKET) return;
+    uint8_t event = hci_event_packet_get_type(packet);
+
+    switch (event) {
+        case BTSTACK_EVENT_STATE:
+            // BTstack activated, get started 
+            if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING){
+                call_sdp_method();
+            }
+            break;
+        default:
+            break;
+    }
+}
+
 static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
     UNUSED(packet_type);
     UNUSED(channel);
@@ -484,9 +488,11 @@ static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel
         case SDP_EVENT_QUERY_COMPLETE:
             if (sdp_event_query_complete_get_status(packet)){
                 printf("SDP query failed 0x%02x\n", sdp_event_query_complete_get_status(packet));
-                break;
-            } 
+                //break;
+            }
             printf("SDP query done.\n");
+            sleep(1);
+            call_sdp_method();
             break;
     }
 }
@@ -504,9 +510,9 @@ int btstack_main(int argc, const char * argv[]){
     */
 
     //if (!sscanf_bd_addr("98:01:A7:9D:C1:94", remote)) {
-    //if (!sscanf_bd_addr("78:D7:5F:09:6E:3D", remote)) {
+    if (!sscanf_bd_addr("78:D7:5F:09:6E:3D", remote)) {
     //if (!sscanf_bd_addr("38:CA:DA:85:5F:E1", remote)) {
-    if (!sscanf_bd_addr("18:56:80:04:42:72", remote)) {
+    //if (!sscanf_bd_addr("18:56:80:04:42:72", remote)) {
         printf("%s <bd addr>\n", argv[0]);
         exit(-1);
     }
