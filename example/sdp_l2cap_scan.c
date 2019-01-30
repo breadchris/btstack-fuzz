@@ -434,8 +434,9 @@ static void print_sdp_results(const uint8_t * record){
     sdp_traverse_response((uint8_t *) record, type, size, (void*) &indent);
 }
 
-static void call_sdp_method() {
-    sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
+int sdp_idx = 0;
+
+static int call_sdp_method() {
     /*
     For fuzzing we have:
     sdp_client_query_uuid16
@@ -443,6 +444,29 @@ static void call_sdp_method() {
     sdp_client_service_attribute_search
     sdp_client_service_search
     */
+    const uint8_t uuid[] = {0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe,
+                            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    const uint8_t attribute_list[] = {0xde, 0xad, 0xbe, 0xef};
+    const uint8_t search_pattern[] = {0x00};
+    switch (sdp_idx) {
+        case 0:
+            sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
+            break;
+        case 1:
+            sdp_client_query_uuid128(&handle_sdp_client_query_result, remote, uuid);
+            break;
+        case 2: 
+            sdp_client_service_attribute_search(&handle_sdp_client_query_result, remote, SDP_ServiceRecordHandle, attribute_list);
+            break;
+        case 3: 
+            sdp_client_service_search(&handle_sdp_client_query_result, remote, search_pattern);
+            break;
+        default:
+            // Stop fuzzing
+            return 1;
+    }
+    sdp_idx++;
+    return 0;
 }
 
 static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
@@ -492,7 +516,9 @@ static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel
             }
             printf("SDP query done.\n");
             sleep(1);
-            call_sdp_method();
+            if (call_sdp_method()) {
+                printf("Done calling sdp methods");
+            }
             break;
     }
 }

@@ -195,6 +195,8 @@ static int cov_send_packet(uint8_t packet_type, uint8_t * packet, int size) {
     memcpy(queue_packet->packet, packet, size);
     queue_packet->size = size;
 
+    log_info_hexdump(packet, size);
+
     pthread_mutex_lock(&bt_packet_queue_mutex);
     vector_append(bt_packet_queue, queue_packet);
     pthread_mutex_unlock(&bt_packet_queue_mutex);
@@ -224,6 +226,7 @@ void *recv_packets() {
 
         if (vector_count(bt_packet_queue) == 0) {
             printf("wut?");
+            return NULL;
         }
 
         pthread_mutex_lock(&bt_packet_queue_mutex);
