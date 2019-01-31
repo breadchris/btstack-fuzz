@@ -35,8 +35,23 @@ static void sdp_client_init(void){
 
 static bd_addr_t remote = {0x98,0x01,0xA7,0x9D,0xC1,0x94};
 
-static void l2cap_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
-    printf("Packet type: %d\n", packet_type);
+static void l2cap_packet_handler(uint8_t packet_type, uint16_t l2cap_cid, uint8_t *packet, uint16_t size) {
+    uint16_t pos = 0;
+    switch (packet_type) {
+        case L2CAP_DATA_PACKET:
+            l2cap_reserve_packet_buffer();
+            uint8_t *buffer = l2cap_get_outgoing_buffer();
+
+            buffer[pos++] = '\xff';
+            buffer[pos++] = '\xff';
+            buffer[pos++] = '\xff';
+            buffer[pos++] = '\xff';
+            int err = l2cap_send_prepared(l2cap_cid, pos);
+            printf("Error: %d\n", err);
+            break;
+        default:
+            break;
+    }
 }
 
 /*
@@ -97,20 +112,9 @@ rfcomm
 also interesting to think about the attack scenario when a device gets data from us (e.g. sdp query, gatt browse, etc.)
 */
 
-void do_l2cap_connect() {
-    uint8_t status = l2cap_create_channel(l2cap_packet_handler, remote, 3, l2cap_max_mtu(), NULL);
-    printf("Status: %d", status);
-
-    uint16_t pos = 0;
-    l2cap_reserve_packet_buffer();
-    uint8_t *buffer = l2cap_get_outgoing_buffer();
-
-    buffer[pos++] = '\xff';
-    buffer[pos++] = '\xff';
-    buffer[pos++] = '\xff';
-    buffer[pos++] = '\xff';
-    int err = l2cap_send_prepared(2, pos);
-    printf("Error: %d\n", err);
+static void do_l2cap_connect(int psm) {
+    uint8_t status = l2cap_create_channel(l2cap_packet_handler, remote, psm, l2cap_max_mtu(), NULL);
+    printf("Status: %d\n", status);
 }
 
 
@@ -463,7 +467,9 @@ static int call_sdp_method() {
             break;
         default:
             // Stop fuzzing
-            return 1;
+            sdp_idx = 0;
+            sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
+            return 0;
     }
     sdp_idx++;
     return 0;
@@ -481,6 +487,12 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
             // BTstack activated, get started 
             if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING){
                 call_sdp_method();
+                /*
+                for (int i = 0x2a; i < 0x2a+32; i++) {
+                    do_l2cap_connect(i);
+                    sleep(1);
+                }
+                */
             }
             break;
         default:
@@ -516,9 +528,7 @@ static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel
             }
             printf("SDP query done.\n");
             sleep(1);
-            if (call_sdp_method()) {
-                printf("Done calling sdp methods");
-            }
+            call_sdp_method();
             break;
     }
 }
@@ -536,8 +546,8 @@ int btstack_main(int argc, const char * argv[]){
     */
 
     //if (!sscanf_bd_addr("98:01:A7:9D:C1:94", remote)) {
-    if (!sscanf_bd_addr("78:D7:5F:09:6E:3D", remote)) {
-    //if (!sscanf_bd_addr("38:CA:DA:85:5F:E1", remote)) {
+    //if (!sscanf_bd_addr("78:D7:5F:09:6E:3D", remote)) {
+    if (!sscanf_bd_addr("38:CA:DA:85:5F:E1", remote)) {
     //if (!sscanf_bd_addr("18:56:80:04:42:72", remote)) {
         printf("%s <bd addr>\n", argv[0]);
         exit(-1);

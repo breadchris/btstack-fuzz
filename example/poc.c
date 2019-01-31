@@ -43,7 +43,7 @@ static void l2cap_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t 
 
 static void do_l2cap_connect() {
     uint8_t status = l2cap_create_channel(l2cap_packet_handler, remote, 3, l2cap_max_mtu(), NULL);
-    printf("Status: %d", status);
+    printf("Status: %d\n", status);
 
     uint16_t pos = 0;
     l2cap_reserve_packet_buffer();
