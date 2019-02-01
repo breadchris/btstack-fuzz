@@ -71,7 +71,7 @@ static uint8_t   attribute_value[1000];
 static const unsigned int attribute_value_buffer_size = sizeof(attribute_value);
 
 // MBP 2016
-static const char * remote_addr_string = "F4-0F-24-3B-1B-E1";
+static const char * remote_addr_string = "38-CA-DA-85-5F-E1";
 // Wiko Sunny static const char * remote_addr_string = "A0:4C:5B:0F:B2:42";
 
 static bd_addr_t remote_addr;

@@ -162,6 +162,7 @@ EXAMPLES = 					\
 	sdp_l2cap_scan			\
 	poc                     \
 	ublox_spp_le_counter    \
+	panu_demo               \
 
 EXAMPLES_USING_LE =			\
 	ancs_client_demo		\
