@@ -500,6 +500,39 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
     }
 }
 
+static uint16_t sdp_bnep_l2cap_psm      = 0;
+static uint16_t sdp_bnep_version        = 0;
+static uint32_t sdp_bnep_remote_uuid    = 0;
+
+static void parse_shit(uint8_t *packet) {
+    des_iterator_t des_list_it;
+    des_iterator_t prot_it;
+
+    switch(sdp_event_query_attribute_byte_get_attribute_id(packet)) {
+        case BLUETOOTH_ATTRIBUTE_PROTOCOL_DESCRIPTOR_LIST:
+            printf("sdp attribute: 0x%04x\n", sdp_event_query_attribute_byte_get_attribute_id(packet));
+
+            for (des_iterator_init(&des_list_it, attribute_value); des_iterator_has_more(&des_list_it); des_iterator_next(&des_list_it)) {                                    
+                uint8_t       *des_element;
+                uint8_t       *element;
+                uint32_t       uuid;
+
+                des_element = des_iterator_get_element(&des_list_it);
+                des_iterator_init(&prot_it, des_element);
+                element = des_iterator_get_element(&prot_it);
+                
+                if (!element) continue;
+                
+                uuid = de_get_uuid32(element);
+                des_iterator_next(&prot_it);
+
+                if (!des_iterator_has_more(&prot_it)) continue;
+                de_element_get_uint16(des_iterator_get_element(&prot_it), &sdp_bnep_l2cap_psm);
+                printf("summary: uuid 0x%04x, channel_info 0x%04x\n", uuid, sdp_bnep_l2cap_psm);
+            }
+    }
+}
+
 static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
     UNUSED(packet_type);
     UNUSED(channel);
@@ -517,8 +550,9 @@ static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel
 
             attribute_value[sdp_event_query_attribute_byte_get_data_offset(packet)] = sdp_event_query_attribute_byte_get_data(packet);
             if ((uint16_t)(sdp_event_query_attribute_byte_get_data_offset(packet)+1) == sdp_event_query_attribute_byte_get_attribute_length(packet)){
-               printf("Attribute 0x%04x: ", sdp_event_query_attribute_byte_get_attribute_id(packet));
-               print_sdp_results(attribute_value);
+               //printf("Attribute 0x%04x: ", sdp_event_query_attribute_byte_get_attribute_id(packet));
+               //print_sdp_results(attribute_value);
+               parse_shit(packet);
             }
             break;
         case SDP_EVENT_QUERY_COMPLETE:

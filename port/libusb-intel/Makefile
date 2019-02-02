@@ -41,7 +41,7 @@ LDFLAGS += $(shell pkg-config libusb-1.0 --libs)
 # CFLAGS  += -I/usr/local/include -DHAVE_PORTAUDIO
 # LDFLAGS += -L/sw/lib -lportaudio -Wl,-framework,CoreAudio -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,Carbon
 
-CFLAGS += -DENABLE_LOG_DEBUG=1 -DENABLE_SDP_EXTRA_QUERIES=1
+CFLAGS += -DENABLE_LOG_DEBUG=1 -DENABLE_SDP_EXTRA_QUERIES=1 -fprofile-arcs -ftest-coverage
 
 clean: clean-intel
 
