@@ -67,7 +67,7 @@ static enum {
     TC_TEST_DATA
 } state = TC_OFF;
 
-const uint16_t TSPX_le_psm = 0x25;
+const uint16_t TSPX_le_psm = 0x2a;
 
 static bd_addr_t cmdline_addr;
 static int cmdline_addr_found = 0;

@@ -70,6 +70,6 @@ void vector_free_contents(vector *v);
 void vector_free(vector *v);
 
 /* Returns: the size of the vector struct */
-unsigned int vector_struct_size();
+unsigned int vector_struct_size(void);
 
 #endif  //VECTOR_H

@@ -95,7 +95,7 @@ static void btstack_run_loop_windows_add_timer(btstack_timer_source_t *ts){
     }
     ts->item.next = it->next;
     it->next = (btstack_linked_item_t *) ts;
-    log_debug("Added timer %p at %u\n", ts, ts->timeout);
+    //log_debug("Added timer %p at %u\n", ts, ts->timeout);
     // btstack_run_loop_windows_dump_timer();
 }
 

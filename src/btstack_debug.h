@@ -79,11 +79,11 @@ static inline void __log_unused(const char *format, ...) {
 #define HCI_DUMP_LOG(log_level, format, ...) hci_dump_log(log_level, "%s.%u: " format, __BTSTACK_FILE__, __LINE__, ## __VA_ARGS__)
 #endif
 
-#ifdef ENABLE_LOG_DEBUG
-#define log_debug(format, ...)  HCI_DUMP_LOG(HCI_DUMP_LOG_LEVEL_DEBUG, format,  ## __VA_ARGS__)
-#else
+//#ifdef ENABLE_LOG_DEBUG
+//#define log_debug(format, ...)  HCI_DUMP_LOG(HCI_DUMP_LOG_LEVEL_DEBUG, format,  ## __VA_ARGS__)
+//#else
 #define log_debug(...) __log_unused(__VA_ARGS__)
-#endif
+//#endif
 
 #ifdef ENABLE_LOG_INFO
 #define log_info(format, ...)  HCI_DUMP_LOG(HCI_DUMP_LOG_LEVEL_INFO, format,  ## __VA_ARGS__)

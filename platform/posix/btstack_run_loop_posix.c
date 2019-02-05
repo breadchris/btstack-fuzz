@@ -102,7 +102,7 @@ static void btstack_run_loop_posix_add_timer(btstack_timer_source_t *ts){
     }
     ts->item.next = it->next;
     it->next = (btstack_linked_item_t *) ts;
-    log_debug("Added timer %p at %u\n", ts, ts->timeout);
+    //log_debug("Added timer %p at %u\n", ts, ts->timeout);
     // btstack_run_loop_posix_dump_timer();
 }
 
@@ -139,7 +139,7 @@ static uint32_t btstack_run_loop_posix_get_time_ms(void){
     struct timeval tv;
     gettimeofday(&tv, NULL);
     uint32_t time_ms = (uint32_t)((tv.tv_sec  - init_tv.tv_sec) * 1000) + (tv.tv_usec / 1000);
-    log_debug("btstack_run_loop_posix_get_time_ms: %u <- %u / %u", time_ms, (int) tv.tv_sec, (int) tv.tv_usec);
+    //log_debug("btstack_run_loop_posix_get_time_ms: %u <- %u / %u", time_ms, (int) tv.tv_sec, (int) tv.tv_usec);
     return time_ms;
 }
 
@@ -204,7 +204,7 @@ static void btstack_run_loop_posix_execute(void) {
         btstack_linked_list_iterator_init(&it, &data_sources);
         while (btstack_linked_list_iterator_has_next(&it) && !data_sources_modified){
             btstack_data_source_t *ds = (btstack_data_source_t*) btstack_linked_list_iterator_next(&it);
-            log_debug("btstack_run_loop_posix_execute: check ds %p with fd %u\n", ds, ds->source.fd);
+            //log_debug("btstack_run_loop_posix_execute: check ds %p with fd %u\n", ds, ds->source.fd);
             if (FD_ISSET(ds->source.fd, &descriptors_read)) {
                 log_debug("btstack_run_loop_posix_execute: process read ds %p with fd %u\n", ds, ds->source.fd);
                 ds->process(ds, DATA_SOURCE_CALLBACK_READ);
@@ -235,7 +235,7 @@ static void btstack_run_loop_posix_execute(void) {
 static void btstack_run_loop_posix_set_timer(btstack_timer_source_t *a, uint32_t timeout_in_ms){
     uint32_t time_ms = btstack_run_loop_posix_get_time_ms();
     a->timeout = time_ms + timeout_in_ms;
-    log_debug("btstack_run_loop_posix_set_timer to %u ms (now %u, timeout %u)", a->timeout, time_ms, timeout_in_ms);
+    //log_debug("btstack_run_loop_posix_set_timer to %u ms (now %u, timeout %u)", a->timeout, time_ms, timeout_in_ms);
 }
 
 static void btstack_run_loop_posix_init(void){

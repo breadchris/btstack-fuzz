@@ -44,6 +44,8 @@ csr_set_bd_addr: ${CORE_OBJ} ${COMMON_OBJ} btstack_chipset_csr.o csr_set_bd_addr
 # CFLAGS  += -I/usr/local/include -DHAVE_PORTAUDIO
 # LDFLAGS += -L/sw/lib -lportaudio -Wl,-framework,CoreAudio -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,Carbon
 
+CFLAGS += -DENABLE_LOG_INFO=1 -DENABLE_SDP_EXTRA_QUERIES=1
+
 clean_src:
 	rm -rf * ${BTSTACK_ROOT}/src/*.o
 	rm -rf * ${BTSTACK_ROOT}/src/classic/*.o

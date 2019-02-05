@@ -14,116 +14,6 @@
 #include "l2cap.h"
 #include "btstack.h"
 
-int record_id = -1;
-int attribute_id = -1;
-
-static uint8_t   attribute_value[1000];
-static const int attribute_value_buffer_size = sizeof(attribute_value);
-static btstack_packet_callback_registration_t hci_event_callback_registration;
-
-static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
-static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
-
-static void sdp_client_init(void){
-    // init L2CAP
-    l2cap_init();
-
-    // register for HCI events
-    hci_event_callback_registration.callback = &packet_handler;
-    hci_add_event_handler(&hci_event_callback_registration);
-}
-
-static bd_addr_t remote = {0x98,0x01,0xA7,0x9D,0xC1,0x94};
-
-static void l2cap_packet_handler(uint8_t packet_type, uint16_t l2cap_cid, uint8_t *packet, uint16_t size) {
-    uint16_t pos = 0;
-    switch (packet_type) {
-        case L2CAP_DATA_PACKET:
-            l2cap_reserve_packet_buffer();
-            uint8_t *buffer = l2cap_get_outgoing_buffer();
-
-            buffer[pos++] = '\xff';
-            buffer[pos++] = '\xff';
-            buffer[pos++] = '\xff';
-            buffer[pos++] = '\xff';
-            int err = l2cap_send_prepared(l2cap_cid, pos);
-            printf("Error: %d\n", err);
-            break;
-        default:
-            break;
-    }
-}
-
-/*
-Common CIDs:
-    2: L2CAP Signalling
-
-Android:
-
-Mac:
-
-iOS:
-    PipeDreams
-    LEAP
-
-Layers:
-l2cap:
-    things to fuzz: 
-        l2cap retransmission
-
-    methods to call:
-        l2cap_create_signaling_classic with L2CAP_SIGNALING_COMMANDS
-sdp:
-    things to fuzz:
-        sdp continuation
-    methods to call:
-        sdp_client_query_uuid16
-        sdp_client_query_uuid128
-        sdp_client_service_attribute_search
-        sdp_client_service_search
-
-bnep --> pan
-    things to fuzz:
-        extension bit
-    methods to call:
-        bnep_send(bnep_cid, (uint8_t*) network_buffer, network_buffer_len);
-        btstack_network_packet_sent();
-avdtp --> a2dp
-avctp --> avrcp
-gatt/att
-    things to fuzz:
-        osx will query the target device, can return some bogus data
-        mike ryan had that thing in his pre
-    methods to call:
-        send_gatt_services_request
-        send_gatt_by_uuid_request
-        send_gatt_included_service_uuid_request
-        send_gatt_included_service_request
-        send_gatt_characteristic_request
-        send_gatt_characteristic_descriptor_request
-        send_gatt_read_characteristic_value_request
-        send_gatt_read_by_type_request
-        send_gatt_write_attribute_value_request
-        send_gatt_write_client_characteristic_configuration_request
-        response shit
-smp
-rfcomm
-
-also interesting to think about the attack scenario when a device gets data from us (e.g. sdp query, gatt browse, etc.)
-*/
-
-static void do_l2cap_connect(int psm) {
-    uint8_t status = l2cap_create_channel(l2cap_packet_handler, remote, psm, l2cap_max_mtu(), NULL);
-    printf("Status: %d\n", status);
-}
-
-
-static void assertBuffer(int size){
-    if (size > attribute_value_buffer_size){
-        printf("SDP attribute value buffer size exceeded: available %d, required %d", attribute_value_buffer_size, size);
-    }
-}
-
 /* Definition of attribute members */
 struct member_def {
     char *name;
@@ -352,6 +242,157 @@ static struct uuid_def uuid16_names[] = {
     { 0x2112, "AppleAgent", NULL, 0 },
 };
 
+/*
+Common CIDs:
+    2: L2CAP Signalling
+
+Android:
+
+Mac:
+
+iOS:
+    PipeDreams
+    LEAP
+
+Layers:
+l2cap:
+    things to fuzz: 
+        l2cap retransmission
+
+    methods to call:
+        l2cap_create_signaling_classic with L2CAP_SIGNALING_COMMANDS
+sdp:
+    things to fuzz:
+        sdp continuation
+    methods to call:
+        sdp_client_query_uuid16
+        sdp_client_query_uuid128
+        sdp_client_service_attribute_search
+        sdp_client_service_search
+
+bnep --> pan
+    things to fuzz:
+        extension bit
+    methods to call:
+        bnep_send(bnep_cid, (uint8_t*) network_buffer, network_buffer_len);
+        btstack_network_packet_sent();
+avdtp --> a2dp
+avctp --> avrcp
+gatt/att
+    things to fuzz:
+        osx will query the target device, can return some bogus data
+        mike ryan had that thing in his pre
+    methods to call:
+        send_gatt_services_request
+        send_gatt_by_uuid_request
+        send_gatt_included_service_uuid_request
+        send_gatt_included_service_request
+        send_gatt_characteristic_request
+        send_gatt_characteristic_descriptor_request
+        send_gatt_read_characteristic_value_request
+        send_gatt_read_by_type_request
+        send_gatt_write_attribute_value_request
+        send_gatt_write_client_characteristic_configuration_request
+        response shit
+smp
+rfcomm
+
+also interesting to think about the attack scenario when a device gets data from us (e.g. sdp query, gatt browse, etc.)
+*/
+
+static bd_addr_t remote[6] = {};
+
+int record_id = -1;
+int attribute_id = -1;
+
+static uint8_t   attribute_value[1000];
+static const int attribute_value_buffer_size = sizeof(attribute_value);
+static btstack_packet_callback_registration_t hci_event_callback_registration;
+
+static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
+static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
+
+static void sdp_client_init(void){
+    // init L2CAP
+    l2cap_init();
+
+    // register for HCI events
+    hci_event_callback_registration.callback = &packet_handler;
+    hci_add_event_handler(&hci_event_callback_registration);
+}
+
+/*
+    0xf  - BNEP
+    0x11 - HID
+ */
+uint8_t try_psm = 0x17;
+static void do_l2cap_connect(int psm);
+
+static void handle_hci_event_packet(uint8_t packet_type, uint16_t l2cap_cid, uint8_t *packet, uint16_t size) {
+    bd_addr_t event_addr;
+    uint16_t psm;
+    uint16_t local_cid;
+    uint16_t handle;
+    uint16_t event = hci_event_packet_get_type(packet);
+    uint16_t pos = 0;
+    switch (event) {
+        case L2CAP_EVENT_CHANNEL_OPENED:
+            l2cap_event_channel_opened_get_address(packet, &event_addr);
+            psm       = l2cap_event_channel_opened_get_psm(packet); 
+            local_cid = l2cap_event_channel_opened_get_local_cid(packet); 
+            handle    = l2cap_event_channel_opened_get_handle(packet);
+            if (l2cap_event_channel_opened_get_status(packet)) {
+                printf("Connection failed: psm[0x%x]\n", psm);
+                try_psm += 1;
+                do_l2cap_connect(try_psm);
+            } else {
+                printf("Connected: psm[0x%x]\n", psm);
+            }
+            l2cap_request_can_send_now_event(l2cap_cid);
+            break;
+        case L2CAP_EVENT_CHANNEL_CLOSED:
+            printf("Disconnected\n");
+            try_psm += 1;
+            do_l2cap_connect(try_psm);
+            break;
+        case L2CAP_EVENT_CAN_SEND_NOW:
+            // handle L2CAP data packet
+            l2cap_reserve_packet_buffer();
+            uint8_t *buffer = l2cap_get_outgoing_buffer();
+
+            buffer[pos++] = '\xff';
+            buffer[pos++] = '\xff';
+            buffer[pos++] = '\xff';
+            buffer[pos++] = '\xff';
+
+            int err = l2cap_send_prepared(l2cap_cid, pos);
+            printf("Error: %d\n", err);
+            break;
+        default:
+            printf("handle_hci_event_packet: 0x%x\n", event);
+    }
+}
+
+static void l2cap_packet_handler(uint8_t packet_type, uint16_t l2cap_cid, uint8_t *packet, uint16_t size) {
+    printf("l2cap_packet_handler: packet_type[%d] l2cap_cid[%d]\n", packet_type, l2cap_cid);
+    switch (packet_type) {
+        case HCI_EVENT_PACKET:
+            handle_hci_event_packet(packet_type, l2cap_cid, packet, size);
+    }
+}
+
+static void do_l2cap_connect(int psm) {
+    uint8_t status = l2cap_create_channel(l2cap_packet_handler, remote, psm, l2cap_max_mtu(), NULL);
+    printf("Status: %d\n", status);
+}
+
+
+static void assertBuffer(int size){
+    if (size > attribute_value_buffer_size){
+        printf("SDP attribute value buffer size exceeded: available %d, required %d", attribute_value_buffer_size, size);
+    }
+}
+
 static void de_traverse_sequence(uint8_t * element, de_traversal_callback_t handler, void *context){
     de_type_t type = de_get_element_type(element);
     if (type != DE_DES) return;
@@ -429,15 +470,6 @@ static int sdp_traverse_response(uint8_t * element, de_type_t de_type, de_size_t
     return 0;
 }
 
-static void print_sdp_results(const uint8_t * record);
-static void print_sdp_results(const uint8_t * record){
-    int indent = 0;
-    // hack to get root DES, too.
-    de_type_t type = de_get_element_type(record);
-    de_size_t size = de_get_size_type(record);
-    sdp_traverse_response((uint8_t *) record, type, size, (void*) &indent);
-}
-
 int sdp_idx = 0;
 
 static int call_sdp_method() {
@@ -486,23 +518,15 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
         case BTSTACK_EVENT_STATE:
             // BTstack activated, get started 
             if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING){
-                call_sdp_method();
-                /*
-                for (int i = 0x2a; i < 0x2a+32; i++) {
-                    do_l2cap_connect(i);
-                    sleep(1);
-                }
-                */
+                //call_sdp_method();
+                do_l2cap_connect(try_psm);
             }
             break;
         default:
+            printf("packet_handler: 0x%x\n", event);
             break;
     }
 }
-
-static uint16_t sdp_bnep_l2cap_psm      = 0;
-static uint16_t sdp_bnep_version        = 0;
-static uint32_t sdp_bnep_remote_uuid    = 0;
 
 static void parse_shit(uint8_t *packet) {
     des_iterator_t des_list_it;
@@ -527,8 +551,10 @@ static void parse_shit(uint8_t *packet) {
                 des_iterator_next(&prot_it);
 
                 if (!des_iterator_has_more(&prot_it)) continue;
-                de_element_get_uint16(des_iterator_get_element(&prot_it), &sdp_bnep_l2cap_psm);
-                printf("summary: uuid 0x%04x, channel_info 0x%04x\n", uuid, sdp_bnep_l2cap_psm);
+
+                uint16_t l2cap_psm = 0;
+                de_element_get_uint16(des_iterator_get_element(&prot_it), &l2cap_psm);
+                printf("summary: uuid 0x%04x, l2cap_psm 0x%04x\n", uuid, l2cap_psm);
             }
     }
 }
@@ -550,8 +576,6 @@ static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel
 
             attribute_value[sdp_event_query_attribute_byte_get_data_offset(packet)] = sdp_event_query_attribute_byte_get_data(packet);
             if ((uint16_t)(sdp_event_query_attribute_byte_get_data_offset(packet)+1) == sdp_event_query_attribute_byte_get_attribute_length(packet)){
-               //printf("Attribute 0x%04x: ", sdp_event_query_attribute_byte_get_attribute_id(packet));
-               //print_sdp_results(attribute_value);
                parse_shit(packet);
             }
             break;
@@ -580,8 +604,8 @@ int btstack_main(int argc, const char * argv[]){
     */
 
     //if (!sscanf_bd_addr("98:01:A7:9D:C1:94", remote)) {
-    //if (!sscanf_bd_addr("78:D7:5F:09:6E:3D", remote)) {
-    if (!sscanf_bd_addr("38:CA:DA:85:5F:E1", remote)) {
+    if (!sscanf_bd_addr("78:D7:5F:09:6E:3D", remote)) {
+    //if (!sscanf_bd_addr("38:CA:DA:85:5F:E1", remote)) {
     //if (!sscanf_bd_addr("18:56:80:04:42:72", remote)) {
         printf("%s <bd addr>\n", argv[0]);
         exit(-1);
