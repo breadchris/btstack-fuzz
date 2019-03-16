@@ -107,6 +107,8 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
     UNUSED(channel);
     UNUSED(size);
 
+    const uint8_t attribute_list[] = {0xde, 0xad, 0xbe, 0xef};
+
     if (packet_type != HCI_EVENT_PACKET) return;
     uint8_t event = hci_event_packet_get_type(packet);
 
@@ -114,7 +116,7 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
         case BTSTACK_EVENT_STATE:
             // BTstack activated, get started 
             if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING){
-                sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
+                sdp_client_service_attribute_search(&handle_sdp_client_query_result, remote, SDP_ServiceRecordHandle, attribute_list);
             }
             break;
         default:
