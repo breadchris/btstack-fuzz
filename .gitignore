@@ -16,6 +16,8 @@
 .theos
 .stamp
 .bts
+*.profdata
+*.profraw
 bluetooth_init_cc2560B_1.*_BT_Spec_4.1.c
 bluetooth_init_cc2564B_1.*_BT_Spec_4.1.c
 TIInit_11.8.32.c

@@ -61,6 +61,21 @@ static void do_l2cap_connect() {
     buffer[2] = 0x00;
     buffer[3] = 0x00;
 
+    // CVE-2018-9356 - BNEP double free
+
+    // CVE-2018-13281 - AVRCP heap overflow
+
+    // CVE-2018-13266 - AVRCP 
+    // CVE-2018-13267 - AVRCP 
+    // CVE-2018-13281 - AVRCP 
+    // CVE-2018-13282 - AVRCP 
+    // CVE-2018-13283 - AVRCP 
+    // CVE-2018-13291 - AVRCP 
+
+    // CVE-2018-9478 - SDP
+
+    // Some others from doc on other computer
+
     int err = l2cap_send_prepared(5, pos);
     printf("Error: %d\n", err);
 }
