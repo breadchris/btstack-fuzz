@@ -120,17 +120,88 @@ static void sdp_copy_raw_data(tCONN_CB* p_ccb, bool offset) {
 * Out of Bounds read in l2cap - https://android.googlesource.com/platform/system/bt/+/d5b44f6522c3294d6f5fd71bc6670f625f716460
 * L2ble OOB read - https://android.googlesource.com/platform/system/bt/+/bdbabb2ca4ebb4dc5971d3d42cb12f8048e23a23
 * l2cap check length - https://android.googlesource.com/platform/system/bt/+/bc6aef4f29387d07e0c638c9db810c6c1193f75b
+static void hidh_l2cif_data_ind(uint16_t l2cap_cid, BT_HDR* p_msg) {
+...
++  if (p_msg->len < 1) {
++    HIDH_TRACE_WARNING("Rcvd L2CAP data, invalid length %d, should be >= 1",
++                       p_msg->len);
++    osi_free(p_msg);
++    android_errorWriteLog(0x534e4554, "80493272");
++    return;
++  }
++
+   ttype = HID_GET_TRANS_FROM_HDR(*p_data); // p_data has data from the server that will get leaked
+   param = HID_GET_PARAM_FROM_HDR(*p_data);
+   rep_type = param & HID_PAR_REP_TYPE_MASK;
+
 * RCE SMP (Check p_cb->role in smp_br_state_machine_event) - https://android.googlesource.com/platform/system/bt/+/49acada519d088d8edf37e48640c76ea5c70e010
 	*   if (p_cb->role > HCI_ROLE_SLAVE) { --> state_table = smp_br_state_table[curr_state][p_cb->role];
 	* Attacker supplied p_cb->role had ended up being used to lookup index in smp_br_state_table, letting you specify what function you wanted to call
 	* also in https://android.googlesource.com/platform/system/bt/+/ae94a4c333417a1829030c4d87a58ab7f1401308
 * RCE - https://android.googlesource.com/platform/system/bt/+/bc259b4926a6f9b33b9ee2c917cd83a55f360cbf
+since the original packet is being reused, we are copying a certain number of bytes past the end?
+not too sure about this one
+avrc_proc_vendor_command
+   if (status != AVRC_STS_NO_ERROR) {
+-    /* use the current GKI buffer to build/send the reject message */
+-    p_data = (uint8_t*)(p_pkt + 1) + p_pkt->offset;
++    p_rsp = (BT_HDR*)osi_malloc(BT_DEFAULT_BUFFER_SIZE);
++    p_rsp->offset = p_pkt->offset;
++    p_data = (uint8_t*)(p_rsp + 1) + p_pkt->offset;
+     *p_data++ = AVRC_RSP_REJ;
+     p_data += AVRC_VENDOR_HDR_SIZE; /* pdu */
+     *p_data++ = 0;                  /* pkt_type */
+     UINT16_TO_BE_STREAM(p_data, 1); /* len */
+     *p_data++ = status;             /* error code */
+-    p_pkt->len = AVRC_VENDOR_HDR_SIZE + 5;
+-    p_rsp = p_pkt;
++    p_rsp->len = AVRC_VENDOR_HDR_SIZE + 5;
+   }
 * ID in BNEP - https://android.googlesource.com/platform/system/bt/+/289a49814aef7f0f0bb98aac8246080abdfeac01
 * ID in BNEP - https://android.googlesource.com/platform/system/bt/+/289a49814aef7f0f0bb98aac8246080abdfeac01
 * ID - https://android.googlesource.com/platform/system/bt/+/13294c70a66347c9e5d05b9f92f8ceb6fe38d7f6
 * ID - https://android.googlesource.com/platform/system/bt/+/cb6a56b1d8cdab7c495ea8f53dcbdb3cfc9477d2
 * l2c ble ID - https://android.googlesource.com/platform/system/bt/+/f1c2c86080bcd7b3142ff821441696fc99c2bc9a
 * RCE in SDP while processing data returned when looking up records - https://android.googlesource.com/platform/system/bt/+/99a263a7f04c5c6f101388007baa18cf1e8c30bf
+// stack based buffer overflow - Stack array of arrays which has a set length, but will copy how every many times the client told it to
+/*******************************************************************************
+ *
+ * Function         bta_dm_sdp_result
+ *
+ * Description      Process the discovery result from sdp
+void bta_dm_sdp_result(tBTA_DM_MSG* p_data) {
+...
+-  uint8_t uuid_list[32][MAX_UUID_SIZE];  // assuming a max of 32 services
++  uint8_t uuid_list[BTA_MAX_SERVICES][MAX_UUID_SIZE];  // assuming a max of 32 services
+                 bta_service_id_to_uuid_lkup_tbl[bta_dm_search_cb.service_index -
+                                                 1];
+             /* Add to the list of UUIDs */
+-            sdpu_uuid16_to_uuid128(tmp_svc, uuid_list[num_uuids]);
+-            num_uuids++;
++            if (num_uuids < BTA_MAX_SERVICES) {
++              sdpu_uuid16_to_uuid128(tmp_svc, uuid_list[num_uuids]);
++              num_uuids++;
++            } else {
++              android_errorWriteLog(0x534e4554, "74016921");
++            }
+           }
+         }
+       }
+...
+             SDP_FindServiceInDb_128bit(bta_dm_search_cb.p_sdp_db, p_sdp_rec);
+         if (p_sdp_rec) {
+           if (SDP_FindServiceUUIDInRec_128bit(p_sdp_rec, &temp_uuid)) {
+-            memcpy(uuid_list[num_uuids], temp_uuid.uu.uuid128, MAX_UUID_SIZE);
+-            num_uuids++;
++            if (num_uuids < BTA_MAX_SERVICES) {
++              memcpy(uuid_list[num_uuids], temp_uuid.uu.uuid128, MAX_UUID_SIZE);
++              num_uuids++;
++            } else {
++              android_errorWriteLog(0x534e4554, "74016921");
++            }
+           }
+         }
+       } while (p_sdp_rec);
 * RCE in PAN - https://android.googlesource.com/platform/system/bt/+/d7d4d5686b2e3c37c7bf10a6a2adff1c95251a13
 
 	```
