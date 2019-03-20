@@ -51,6 +51,29 @@ static tAVRC_STS avrc_ctrl_pars_vendor_rsp(tAVRC_MSG_VENDOR* p_msg,
   }
   /* TODO: Break the big switch into functions. */
   switch (p_result->pdu) {
+    /* case AVRC_PDU_REQUEST_CONTINUATION_RSP: 0x40 */
+    /* case AVRC_PDU_ABORT_CONTINUATION_RSP:   0x41 */
+    case AVRC_PDU_REGISTER_NOTIFICATION:
+      avrc_parse_notification_rsp(p, &p_result->reg_notif);
+      break;
+...
+static tAVRC_STS avrc_ctrl_pars_vendor_rsp(tAVRC_MSG_VENDOR* p_msg,
+                                           tAVRC_RESPONSE* p_result,
+                                           uint8_t* p_buf, uint16_t* buf_len) {
+  uint8_t* p = p_msg->p_vendor_data;
+  BE_STREAM_TO_UINT8(p_result->pdu, p);
+  p++; /* skip the reserved/packe_type byte */
+  uint16_t len;
+  BE_STREAM_TO_UINT16(len, p);
+  AVRC_TRACE_DEBUG("%s ctype:0x%x pdu:0x%x, len:%d", __func__, p_msg->hdr.ctype,
+                   p_result->pdu, len);
+  /* Todo: Issue in handling reject, check */
+  if (p_msg->hdr.ctype == AVRC_RSP_REJ) {
+    p_result->rsp.status = *p;
+    return p_result->rsp.status;
+  }
+  /* TODO: Break the big switch into functions. */
+  switch (p_result->pdu) {
 ...
     case AVRC_PDU_LIST_PLAYER_APP_VALUES:
       if (len == 0) {
