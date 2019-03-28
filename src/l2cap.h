@@ -536,6 +536,8 @@ int  l2cap_reserve_packet_buffer(void);
  */
 uint8_t *l2cap_get_outgoing_buffer(void);
 
+int l2cap_send_signaling_packet(hci_con_handle_t handle, L2CAP_SIGNALING_COMMANDS cmd, int identifier, ...);
+
 /** 
  * @brief Send L2CAP packet prepared in outgoing buffer to channel
  * @note Only for L2CAP Basic Mode Channels

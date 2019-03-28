@@ -74,14 +74,12 @@
 // mac 2011: static bd_addr_t remote = {0x04, 0x0C, 0xCE, 0xE4, 0x85, 0xD3};
 // pts: static bd_addr_t remote = {0x00, 0x1B, 0xDC, 0x08, 0x0A, 0xA5};
 // mac 2013: 
-// static const char * device_addr_string = "84:38:35:65:d1:15";
-// iPhone 5S: static const char * device_addr_string = "54:E4:3A:26:A2:39";
+// static const char * remote_addr_string = "84:38:35:65:d1:15";
+// iPhone 5S: static const char * remote_addr_string = "54:E4:3A:26:A2:39";
 // phone 2013:  
-// static const char * device_addr_string = "B0:34:95:CB:97:C4";
+// static const char * remote_addr_string = "B0:34:95:CB:97:C4";
 
-static const char * device_addr_string = "B0:34:95:CB:97:C4";
-
-static bd_addr_t device_addr;
+static bd_addr_t remote_addr;
 #endif
 
 static uint16_t avrcp_cid = 0;
@@ -208,7 +206,6 @@ int btstack_main(int argc, const char * argv[]){
 
 #ifdef HAVE_BTSTACK_STDIN
     // Parse human readable Bluetooth address.
-    sscanf_bd_addr(device_addr_string, device_addr);
     btstack_stdin_setup(stdin_process);
 #endif
     printf("Starting BTstack ...\n");
@@ -426,8 +423,8 @@ static void show_usage(void){
     bd_addr_t      iut_address;
     gap_local_bd_addr(iut_address);
     printf("\n--- Bluetooth AVRCP Controller Connection Test Console %s ---\n", bd_addr_to_str(iut_address));
-    printf("c      - AVRCP Controller create connection to addr %s\n", bd_addr_to_str(device_addr));
-    printf("e      - AVRCP Browsing Controller create connection to addr %s\n", bd_addr_to_str(device_addr));
+    printf("c      - AVRCP Controller create connection to addr %s\n", bd_addr_to_str(remote_addr));
+    printf("e      - AVRCP Browsing Controller create connection to addr %s\n", bd_addr_to_str(remote_addr));
     printf("E      - AVRCP Browsing Controller disconnect\n");
     printf("C      - AVRCP Controller disconnect\n");
 
@@ -457,12 +454,12 @@ static void stdin_process(char cmd){
 
     switch (cmd){
         case 'c':
-            printf(" - Create AVRCP connection for control to addr %s.\n", bd_addr_to_str(device_addr));
-            status = avrcp_controller_connect(device_addr, &avrcp_cid);
+            printf(" - Create AVRCP connection for control to addr %s.\n", bd_addr_to_str(remote_addr));
+            status = avrcp_controller_connect(remote_addr, &avrcp_cid);
             break;
         case 'C':
             if (avrcp_connected){
-                printf(" - AVRCP Controller disconnect from addr %s.\n", bd_addr_to_str(device_addr));
+                printf(" - AVRCP Controller disconnect from addr %s.\n", bd_addr_to_str(remote_addr));
                 status = avrcp_controller_disconnect(avrcp_cid);
                 break;
             }
@@ -471,15 +468,15 @@ static void stdin_process(char cmd){
 
         case 'e':
             if (!avrcp_connected) {
-                printf(" You must first create AVRCP connection for control to addr %s.\n", bd_addr_to_str(device_addr));
+                printf(" You must first create AVRCP connection for control to addr %s.\n", bd_addr_to_str(remote_addr));
                 break;
             }
-            printf(" - Create AVRCP connection for browsing to addr %s.\n", bd_addr_to_str(device_addr));
-            status = avrcp_browsing_controller_connect(device_addr, ertm_buffer, sizeof(ertm_buffer), &ertm_config, &browsing_cid);
+            printf(" - Create AVRCP connection for browsing to addr %s.\n", bd_addr_to_str(remote_addr));
+            status = avrcp_browsing_controller_connect(remote_addr, ertm_buffer, sizeof(ertm_buffer), &ertm_config, &browsing_cid);
             break;
         case 'E':
             if (avrcp_browsing_connected){
-                printf(" - AVRCP Browsing Controller disconnect from addr %s.\n", bd_addr_to_str(device_addr));
+                printf(" - AVRCP Browsing Controller disconnect from addr %s.\n", bd_addr_to_str(remote_addr));
                 status = avrcp_browsing_controller_disconnect(browsing_cid);
                 break;
             }

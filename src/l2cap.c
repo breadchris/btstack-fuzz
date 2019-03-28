@@ -1108,7 +1108,7 @@ static int l2cap_security_level_0_allowed_for_PSM(uint16_t psm){
     return (psm == BLUETOOTH_PROTOCOL_SDP) && (!require_security_level2_for_outgoing_sdp);
 }
 
-static int l2cap_send_signaling_packet(hci_con_handle_t handle, L2CAP_SIGNALING_COMMANDS cmd, int identifier, ...){
+int l2cap_send_signaling_packet(hci_con_handle_t handle, L2CAP_SIGNALING_COMMANDS cmd, int identifier, ...){
     if (!hci_can_send_acl_packet_now(handle)){
         log_info("l2cap_send_signaling_packet, cannot send");
         return BTSTACK_ACL_BUFFERS_FULL;

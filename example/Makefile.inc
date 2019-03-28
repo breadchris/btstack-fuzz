@@ -34,8 +34,6 @@ CORE += \
 
 COMMON += \
 	vector.c                    \
-	radamsa.c                   \
-	radamsa_main.c              \
 	ad_parser.c                 \
 	hci.c			            \
 	hci_cmd.c		            \
@@ -46,6 +44,8 @@ COMMON += \
 	btstack_tlv.c               \
 	btstack_crypto.c            \
 	uECC.c                      \
+	#radamsa.c                   \
+	#radamsa_main.c              \
 
 CLASSIC += \
 	btstack_link_key_db_memory.c   \

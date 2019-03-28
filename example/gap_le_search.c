@@ -55,8 +55,7 @@
 
 #include "btstack.h"
 
-static bd_addr_t cmdline_search;
-static int cmdline_search_found = 0;
+bd_addr_t remote_addr;
 
 static btstack_packet_callback_registration_t hci_event_callback_registration;
 
@@ -97,13 +96,7 @@ static char *dump_advertisement_data(const uint8_t * adv_data, uint8_t adv_size)
             char *data_str = calloc(1, size + 1);
             memcpy(data_str, data, size + 1);
 
-            if (cmdline_search_found) {
-                if (strstr(data_str, cmdline_search)) {
-                    return data_str;
-                }
-            } else {
-                return data_str;
-            }
+            return data_str;
         }        
     }
     return NULL;
@@ -160,18 +153,7 @@ int btstack_main(int argc, const char * argv[]){
 
 #ifdef HAVE_BTSTACK_STDIN
     int arg = 1;
-    cmdline_search_found = 0;
     
-    while (arg < argc) {
-        if(!strcmp(argv[arg], "-s") || !strcmp(argv[arg], "--search")){
-            arg++;
-            cmdline_search_found = sscanf_bd_addr(argv[arg], cmdline_search);
-            arg++;
-            continue;
-        }
-        usage(argv[0]);
-        return 0;
-    }
 #else
     (void)argc;
     (void)argv;

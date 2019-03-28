@@ -8,9 +8,7 @@ COMMON += btstack_audio_portaudio.c
 
 include ${BTSTACK_ROOT}/example/Makefile.inc
 
-CFLAGS  += -g -std=c99 -Wall -Wmissing-prototypes -Wstrict-prototypes -Wshadow -Wunused-parameter -Wredundant-decls -Wsign-compare -lusb-1.0 -DENABLE_LOG_DEBUG=1
-# CFLAGS += -Werror
-# CFLAGS += -pedantic
+CFLAGS  += -g -std=c99 -Wall -Wmissing-prototypes -Wstrict-prototypes -Wshadow -Wunused-parameter -Wredundant-decls -Wsign-compare -DENABLE_LOG_DEBUG=1
 
 # only LLVM
 # CFLAGS += -Wnewline-eof
@@ -30,19 +28,8 @@ VPATH += ${BTSTACK_ROOT}/chipset/csr
 CFLAGS  += $(shell pkg-config libusb-1.0 --cflags)
 LDFLAGS += $(shell pkg-config libusb-1.0 --libs)
 
-EXAMPLES += csr_set_bd_addr
-
 csr_set_bd_addr: ${CORE_OBJ} ${COMMON_OBJ} btstack_chipset_csr.o csr_set_bd_addr.o
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
-
-
-# use pkg-config for portaudio
-# CFLAGS  += $(shell pkg-config portaudio-2.0 --cflags) -DHAVE_PORTAUDIO
-# LDFLAGS += $(shell pkg-config portaudio-2.0 --libs)
-
-# hard coded flags for portaudio in /usr/local/lib
-# CFLAGS  += -I/usr/local/include -DHAVE_PORTAUDIO
-# LDFLAGS += -L/sw/lib -lportaudio -Wl,-framework,CoreAudio -Wl,-framework,AudioToolbox -Wl,-framework,AudioUnit -Wl,-framework,Carbon
 
 # CFLAGS += -DENABLE_LOG_INFO=1 -DENABLE_SDP_EXTRA_QUERIES=1
 CFLAGS += -DENABLE_SDP_EXTRA_QUERIES=1
@@ -52,6 +39,16 @@ clean_src:
 	rm -rf * ${BTSTACK_ROOT}/src/classic/*.o
 	rm -rf * ${BTSTACK_ROOT}/src/ble/*.o
 	rm -rf * ${BTSTACK_ROOT}/platform/embedded/*.o
+
+EXAMPLES = 					\
+	avrcp_browsing_client   \
+	gap_inquiry 			\
+	gap_le_advertisements   \
+	gap_le_search           \
+	gatt_browser            \
+	sdp_general_query		\
+	sdp_l2cap_scan			\
+	poc                     \
 
 all: ${EXAMPLES}
 

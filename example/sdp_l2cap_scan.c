@@ -300,7 +300,7 @@ rfcomm
 also interesting to think about the attack scenario when a device gets data from us (e.g. sdp query, gatt browse, etc.)
 */
 
-static bd_addr_t remote[6] = {};
+bd_addr_t remote_addr;
 
 int record_id = -1;
 int attribute_id = -1;
@@ -343,8 +343,6 @@ static void handle_hci_event_packet(uint8_t packet_type, uint16_t l2cap_cid, uin
             handle    = l2cap_event_channel_opened_get_handle(packet);
             if (l2cap_event_channel_opened_get_status(packet)) {
                 printf("Connection failed: psm[0x%x]\n", psm);
-                try_psm += 1;
-                do_l2cap_connect(try_psm);
             } else {
                 printf("Connected: psm[0x%x]\n", psm);
             }
@@ -352,8 +350,6 @@ static void handle_hci_event_packet(uint8_t packet_type, uint16_t l2cap_cid, uin
             break;
         case L2CAP_EVENT_CHANNEL_CLOSED:
             printf("Disconnected\n");
-            try_psm += 1;
-            do_l2cap_connect(try_psm);
             break;
         case L2CAP_EVENT_CAN_SEND_NOW:
             // handle L2CAP data packet
@@ -382,7 +378,7 @@ static void l2cap_packet_handler(uint8_t packet_type, uint16_t l2cap_cid, uint8_
 }
 
 static void do_l2cap_connect(int psm) {
-    uint8_t status = l2cap_create_channel(l2cap_packet_handler, remote, psm, l2cap_max_mtu(), NULL);
+    uint8_t status = l2cap_create_channel(l2cap_packet_handler, remote_addr, psm, l2cap_max_mtu(), NULL);
     printf("Status: %d\n", status);
 }
 
@@ -486,21 +482,21 @@ static int call_sdp_method() {
     const uint8_t search_pattern[] = {0x00};
     switch (sdp_idx) {
         case 0:
-            sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
+            sdp_client_query_uuid16(&handle_sdp_client_query_result, remote_addr, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
             break;
         case 1:
-            sdp_client_query_uuid128(&handle_sdp_client_query_result, remote, uuid);
+            sdp_client_query_uuid128(&handle_sdp_client_query_result, remote_addr, uuid);
             break;
         case 2: 
-            sdp_client_service_attribute_search(&handle_sdp_client_query_result, remote, SDP_ServiceRecordHandle, attribute_list);
+            sdp_client_service_attribute_search(&handle_sdp_client_query_result, remote_addr, SDP_ServiceRecordHandle, attribute_list);
             break;
         case 3: 
-            sdp_client_service_search(&handle_sdp_client_query_result, remote, search_pattern);
+            sdp_client_service_search(&handle_sdp_client_query_result, remote_addr, search_pattern);
             break;
         default:
             // Stop fuzzing
             sdp_idx = 0;
-            sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
+            sdp_client_query_uuid16(&handle_sdp_client_query_result, remote_addr, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
             return 0;
     }
     sdp_idx++;
@@ -518,12 +514,12 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
         case BTSTACK_EVENT_STATE:
             // BTstack activated, get started 
             if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING){
-                //call_sdp_method();
-                do_l2cap_connect(try_psm);
+                call_sdp_method();
+                //do_l2cap_connect(try_psm);
             }
             break;
         default:
-            printf("packet_handler: 0x%x\n", event);
+            // printf("packet_handler: 0x%x\n", event);
             break;
     }
 }
@@ -554,7 +550,17 @@ static void parse_shit(uint8_t *packet) {
 
                 uint16_t l2cap_psm = 0;
                 de_element_get_uint16(des_iterator_get_element(&prot_it), &l2cap_psm);
-                printf("summary: uuid 0x%04x, l2cap_psm 0x%04x\n", uuid, l2cap_psm);
+
+                char *uuid_name = NULL;
+                for (size_t i = 0; i < sizeof(uuid16_names) / sizeof(struct uuid_def); i++) {
+                    if (uuid16_names[i].num == l2cap_psm) uuid_name = uuid16_names[i].name;
+                }
+
+                if (uuid_name != NULL) {
+                    printf("summary: uuid 0x%04x, l2cap_psm: 0x%04x, name: %s\n", uuid, l2cap_psm, uuid_name);
+                } else {
+                    printf("summary: uuid 0x%04x, l2cap_psm: 0x%04x\n", uuid, l2cap_psm);
+                }
             }
     }
 }
@@ -586,7 +592,7 @@ static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel
             }
             printf("SDP query done.\n");
             sleep(1);
-            call_sdp_method();
+            //call_sdp_method();
             break;
     }
 }
@@ -595,21 +601,6 @@ int btstack_main(int argc, const char * argv[]);
 int btstack_main(int argc, const char * argv[]){
     (void)argc;
     (void)argv;
-
-/*
-    if (argc != 2) {
-        printf("%d <bd addr>\n", argc);
-        exit(-1);
-    }
-    */
-
-    //if (!sscanf_bd_addr("98:01:A7:9D:C1:94", remote)) {
-    if (!sscanf_bd_addr("78:D7:5F:09:6E:3D", remote)) {
-    //if (!sscanf_bd_addr("38:CA:DA:85:5F:E1", remote)) {
-    //if (!sscanf_bd_addr("18:56:80:04:42:72", remote)) {
-        printf("%s <bd addr>\n", argv[0]);
-        exit(-1);
-    }
     
     printf("Client HCI init done\r\n");
     

@@ -97,17 +97,13 @@ static void sdp_client_init(void){
  */ 
 
 /* LISTING_START(Remote): Address of remote device in big-endian order */
-//static bd_addr_t remote = {0x00,0x1A,0x7D,0xDA,0x71,0x13};
-static bd_addr_t remote = {0xD4,0x61,0x2E,0x12,0x67,0x7A};
-//static bd_addr_t remote = {0x78,0xD7,0x5F,0x09,0x6E,0x3D};
+static bd_addr_t remote;
 /* LISTING_END */
 
 /* LISTING_START(SDPQueryUUID): Querying a list of service records on a remote device. */
 static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
     UNUSED(channel);
     UNUSED(size);
-
-    const uint8_t attribute_list[] = {0xde, 0xad, 0xbe, 0xef};
 
     if (packet_type != HCI_EVENT_PACKET) return;
     uint8_t event = hci_event_packet_get_type(packet);
@@ -116,7 +112,7 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
         case BTSTACK_EVENT_STATE:
             // BTstack activated, get started 
             if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING){
-                sdp_client_service_attribute_search(&handle_sdp_client_query_result, remote, SDP_ServiceRecordHandle, attribute_list);
+                sdp_client_query_uuid16(&handle_sdp_client_query_result, remote, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
             }
             break;
         default:
@@ -182,6 +178,11 @@ int btstack_main(int argc, const char * argv[]);
 int btstack_main(int argc, const char * argv[]){
     (void)argc;
     (void)argv;
+
+    if (!sscanf_bd_addr("D4:61:2E:12:67:7A", remote)) {
+        printf("%s <bd addr>\n", argv[0]);
+        exit(-1);
+    }
     
     printf("Client HCI init done\r\n");
     
