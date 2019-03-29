@@ -62,6 +62,7 @@ static const char *l2cap_signaling_commands_format[] = {
 "D",     // 0x09 echo response: Data
 "2",     // 0x0a information request: InfoType {1=Connectionless MTU, 2=Extended features supported}
 "22D",   // 0x0b information response: InfoType, Result, Data
+"",      // 0x00 disconnection request fuzz
 #ifdef ENABLE_BLE
 NULL,    // 0x0c non-supported AMP command
 NULL,    // 0x0d non-supported AMP command
@@ -114,8 +115,14 @@ static uint16_t l2cap_create_signaling_internal(uint8_t * acl_buffer, hci_con_ha
     little_endian_store_16(acl_buffer, 6, cid);
     // 8 - Code
     acl_buffer[8] = uint8_fuzz(TAG_L2CAP_SIGNALING_CMD, cmd);
+    if (cmd == DISCONNECTION_REQUEST_FUZZ) {
+        acl_buffer[8] = DISCONNECTION_REQUEST;
+    }
     // 9 - id (!= 0 sequentially)
     acl_buffer[9] = identifier;
+    if (cmd == DISCONNECTION_REQUEST_FUZZ) {
+        acl_buffer[9] = 0;
+    }
     
     // 12 - L2CAP signaling parameters
     uint16_t pos = 12;
@@ -156,6 +163,9 @@ static uint16_t l2cap_create_signaling_internal(uint8_t * acl_buffer, hci_con_ha
     little_endian_store_16_fuzz(TAG_L2CAP_PACKET_LEN, acl_buffer, 4,  pos - 6 - 2);
     // 10 - L2CAP signaling parameter length
     little_endian_store_16_fuzz(TAG_L2CAP_SIGNALING_LEN, acl_buffer, 10, pos - 12);
+    if (cmd == DISCONNECTION_REQUEST_FUZZ) {
+        little_endian_store_16(acl_buffer, 10, 0);
+    }
     
     return pos;
 }

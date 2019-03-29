@@ -244,8 +244,8 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
  */
 
 /* LISTING_START(MainConfiguration): Setup packet handler for GAP inquiry */
-int btstack_main(int argc, const char * argv[]);
-int btstack_main(int argc, const char * argv[]) {
+int btstack_main(int argc, const char * argv[], bd_addr_t addr);
+int btstack_main(int argc, const char * argv[], bd_addr_t addr) {
     (void)argc;
     (void)argv;
 

@@ -1224,7 +1224,7 @@ static inline void channelStateVarClearFlag(l2cap_channel_t *channel, L2CAP_CHAN
 
 
 #ifdef ENABLE_BLE
-static int l2cap_send_le_signaling_packet(hci_con_handle_t handle, L2CAP_SIGNALING_COMMANDS cmd, int identifier, ...){
+int l2cap_send_le_signaling_packet(hci_con_handle_t handle, L2CAP_SIGNALING_COMMANDS cmd, int identifier, ...){
 
     if (!hci_can_send_acl_packet_now(handle)){
         log_info("l2cap_send_le_signaling_packet, cannot send");

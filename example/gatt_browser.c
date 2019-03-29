@@ -275,27 +275,10 @@ static void usage(const char *name){
 }
 #endif
 
-int btstack_main(int argc, const char * argv[]);
-int btstack_main(int argc, const char * argv[]){
-
-#ifdef HAVE_BTSTACK_STDIN
-    int arg = 1;
-    cmdline_addr_found = 0;
-    
-    while (arg < argc) {
-        if(!strcmp(argv[arg], "-a") || !strcmp(argv[arg], "--address")){
-            arg++;
-            cmdline_addr_found = sscanf_bd_addr(argv[arg], cmdline_addr);
-            arg++;
-            continue;
-        }
-        usage(argv[0]);
-        return 0;
-    }
-#else
-    (void)argc;
-    (void)argv;
-#endif
+int btstack_main(int argc, const char * argv[], bd_addr_t addr);
+int btstack_main(int argc, const char * argv[], bd_addr_t addr){
+    cmdline_addr_found = 1;
+    memcpy(cmdline_addr, addr, sizeof(bd_addr_t));
 
     // setup GATT client
     gatt_client_setup();

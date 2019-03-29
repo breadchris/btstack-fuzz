@@ -74,7 +74,7 @@ static btstack_tlv_posix_t   tlv_context;
 static bd_addr_t             local_addr;
 static bd_addr_t remote_addr[6] = {};
 
-int btstack_main(int argc, const char** argv);
+int btstack_main(int argc, const char** argv, bd_addr_t remote_addr);
 
 static btstack_packet_callback_registration_t hci_event_callback_registration;
 
@@ -243,7 +243,7 @@ int main(int argc, char** argv){
     signal(SIGINT, sigint_handler);
 
     // setup app
-    btstack_main(argc, argv);
+    btstack_main(argc, argv, remote_addr);
 
     // go
     btstack_run_loop_execute();    

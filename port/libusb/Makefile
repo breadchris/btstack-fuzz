@@ -41,14 +41,15 @@ clean_src:
 	rm -rf * ${BTSTACK_ROOT}/platform/embedded/*.o
 
 EXAMPLES = 					\
-	avrcp_browsing_client   \
-	gap_inquiry 			\
-	gap_le_advertisements   \
-	gap_le_search           \
-	gatt_browser            \
-	sdp_general_query		\
-	sdp_l2cap_scan			\
 	poc                     \
+	gap_inquiry 			\
+	gap_le_search           \
+	gatt_battery_query      \
+	gap_le_advertisements   \
+	gatt_browser            \
+	avrcp_browsing_client   \
+	#sdp_general_query		\
+	#sdp_l2cap_scan			\
 
 all: ${EXAMPLES}
 

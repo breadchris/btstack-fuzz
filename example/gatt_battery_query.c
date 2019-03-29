@@ -118,8 +118,19 @@ static void add_to_blacklist(bd_addr_t addr){
 static void dump_advertising_report(advertising_report_t * e){
     printf("    * adv. event: evt-type %u, addr-type %u, addr %s, rssi %u, length adv %u, data: ", e->event_type,
            e->address_type, bd_addr_to_str(e->address), e->rssi, e->length);
-    printf_hexdump(e->data, e->length);
-    
+    //printf_hexdump(e->data, e->length);
+
+    ad_context_t context;
+    for (ad_iterator_init(&context, e->length, (uint8_t *)e->data) ; ad_iterator_has_more(&context) ; ad_iterator_next(&context)){
+        uint8_t data_type    = ad_iterator_get_data_type(&context);
+        uint8_t size         = ad_iterator_get_data_len(&context);
+        const uint8_t * data = ad_iterator_get_data(&context);
+
+
+        if (data_type == BLUETOOTH_DATA_TYPE_SHORTENED_LOCAL_NAME || data_type == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME){
+            printf("device name: %s\n", data);
+        }        
+    }
 }
 
 static void dump_characteristic_value(uint8_t * blob, uint16_t blob_length){
@@ -312,28 +323,11 @@ static void usage(const char *name){
 }
 #endif
 
-int btstack_main(int argc, const char * argv[]);
-int btstack_main(int argc, const char * argv[]){
-
-#ifdef HAVE_BTSTACK_STDIN
-    int arg = 1;
+int btstack_main(int argc, const char * argv[], bd_addr_t addr);
+int btstack_main(int argc, const char * argv[], bd_addr_t addr){
     cmdline_addr_found = 0;
-    
-    while (arg < argc) {
-        if(!strcmp(argv[arg], "-a") || !strcmp(argv[arg], "--address")){
-            arg++;
-            cmdline_addr_found = sscanf_bd_addr(argv[arg], cmdline_addr);
-            arg++;
-            if (!cmdline_addr_found) exit(1);
-            continue;
-        }
-        usage(argv[0]);
-        return 0;
-    }
-#else
-    (void)argc;
-    (void)argv;
-#endif
+    memcpy(cmdline_addr, addr, sizeof(bd_addr_t));
+
     l2cap_init();
 
     // setup ATT server - only needed if LE Peripheral does ATT queries on its own, e.g. Android phones

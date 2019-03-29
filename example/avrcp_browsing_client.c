@@ -165,10 +165,12 @@ static void stdin_process(char cmd);
 
 #define BROWSING_ENABLED 1
 
-int btstack_main(int argc, const char * argv[]);
-int btstack_main(int argc, const char * argv[]){
+int btstack_main(int argc, const char * argv[], bd_addr_t addr);
+int btstack_main(int argc, const char * argv[], bd_addr_t addr){
     (void)argc;
     (void)argv;
+
+    memcpy(remote_addr, addr, sizeof(bd_addr_t));
 
     // Initialize L2CAP.
     l2cap_init();

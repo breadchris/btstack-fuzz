@@ -148,8 +148,8 @@ static void usage(const char *name){
 }
 #endif
 
-int btstack_main(int argc, const char * argv[]);
-int btstack_main(int argc, const char * argv[]){
+int btstack_main(int argc, const char * argv[], bd_addr_t addr);
+int btstack_main(int argc, const char * argv[], bd_addr_t addr){
 
 #ifdef HAVE_BTSTACK_STDIN
     int arg = 1;

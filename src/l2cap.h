@@ -451,6 +451,8 @@ void l2cap_set_max_le_mtu(uint16_t max_mtu);
  */
 uint8_t l2cap_create_channel(btstack_packet_handler_t packet_handler, bd_addr_t address, uint16_t psm, uint16_t mtu, uint16_t * out_local_cid);
 
+uint8_t l2cap_create_channel_le(btstack_packet_handler_t packet_handler, bd_addr_t address, uint16_t psm, uint16_t mtu, uint16_t * out_local_cid);
+
 /** 
  * @brief Creates L2CAP channel to the PSM of a remote device with baseband address using Enhanced Retransmission Mode. 
  *        A new baseband connection will be initiated if necessary.
@@ -537,6 +539,7 @@ int  l2cap_reserve_packet_buffer(void);
 uint8_t *l2cap_get_outgoing_buffer(void);
 
 int l2cap_send_signaling_packet(hci_con_handle_t handle, L2CAP_SIGNALING_COMMANDS cmd, int identifier, ...);
+int l2cap_send_le_signaling_packet(hci_con_handle_t handle, L2CAP_SIGNALING_COMMANDS cmd, int identifier, ...);
 
 /** 
  * @brief Send L2CAP packet prepared in outgoing buffer to channel
