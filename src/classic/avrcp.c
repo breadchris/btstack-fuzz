@@ -365,7 +365,7 @@ uint16_t avrcp_get_next_cid(void){
     return avrcp_cid_counter;
 }
 
-static avrcp_connection_t * avrcp_create_connection(bd_addr_t remote_addr, avrcp_context_t * context){
+avrcp_connection_t * avrcp_create_connection(bd_addr_t remote_addr, avrcp_context_t * context){
     avrcp_connection_t * connection = btstack_memory_avrcp_connection_get();
     if (!connection){
         log_error("avrcp: not enough memory to create connection");

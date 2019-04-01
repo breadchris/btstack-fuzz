@@ -2537,6 +2537,12 @@ static void l2cap_signaling_handler_channel(l2cap_channel_t *channel, uint8_t *c
         }
         return;
     }
+
+    if (code == DISCONNECTION_RESPONSE) {
+        // CVE-2018-9361 + le version
+        printf("DISCONNECTION_RESPONSE (CVE-2018-9361): ");
+        printf_hexdump(command + L2CAP_SIGNALING_COMMAND_DATA_OFFSET, cmd_len);
+    }
     
     // @STATEMACHINE(l2cap)
     switch (channel->state) {
@@ -2642,7 +2648,6 @@ static void l2cap_signaling_handler_channel(l2cap_channel_t *channel, uint8_t *c
             
         case L2CAP_STATE_WAIT_DISCONNECT:
             switch (code) {
-                case DISCONNECTION_RESPONSE:
                     l2cap_finialize_channel_close(channel);
                     break;
                 default:
@@ -2650,7 +2655,6 @@ static void l2cap_signaling_handler_channel(l2cap_channel_t *channel, uint8_t *c
                     break;
             }
             break;
-            
         case L2CAP_STATE_CLOSED:
             // @TODO handle incoming requests
             break;
@@ -3080,6 +3084,9 @@ static int l2cap_le_signaling_handler_dispatch(hci_con_handle_t handle, uint8_t 
 #endif
 
         case DISCONNECTION_RESPONSE:
+            // CVE-2018-9361 + le version
+            printf("DISCONNECTION_RESPONSE (CVE-2018-9361): ");
+            printf_hexdump(command, len);
             break;
 
         default:

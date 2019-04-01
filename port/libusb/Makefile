@@ -48,8 +48,8 @@ EXAMPLES = 					\
 	gap_le_advertisements   \
 	gatt_browser            \
 	avrcp_browsing_client   \
+	sdp_l2cap_scan			\
 	#sdp_general_query		\
-	#sdp_l2cap_scan			\
 
 all: ${EXAMPLES}
 

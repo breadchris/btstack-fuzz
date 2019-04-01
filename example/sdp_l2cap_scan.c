@@ -597,10 +597,12 @@ static void handle_sdp_client_query_result(uint8_t packet_type, uint16_t channel
     }
 }
 
-int btstack_main(int argc, const char * argv[]);
-int btstack_main(int argc, const char * argv[]){
+int btstack_main(int argc, const char * argv[], bd_addr_t addr);
+int btstack_main(int argc, const char * argv[], bd_addr_t addr){
     (void)argc;
     (void)argv;
+
+    memcpy(remote_addr, addr, sizeof(bd_addr_t));
     
     printf("Client HCI init done\r\n");
     

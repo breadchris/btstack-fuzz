@@ -533,6 +533,8 @@ const char * avrcp_ctype2str(uint8_t index);
 const char * avrcp_repeat2str(uint8_t index);
 const char * avrcp_shuffle2str(uint8_t index);
 
+avrcp_connection_t * avrcp_create_connection(bd_addr_t remote_addr, avrcp_context_t * context);
+
 void avrcp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size, avrcp_context_t * context);
 
 void avrcp_create_sdp_record(uint8_t controller, uint8_t * service, uint32_t service_record_handle, uint8_t browsing, uint16_t supported_features, const char * service_name, const char * service_provider_name);

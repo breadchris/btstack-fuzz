@@ -50,7 +50,7 @@ static uint8_t value[100];
 // iPhone SE: static const char * device_addr_string = "BC:EC:5D:E6:15:03";
 // iPhone 6:  static const char * device_addr_string = "D8:BB:2C:DF:F1:08";
 // iPhone 5S:  
-static const char * device_addr_string = "54:E4:3A:26:A2:39";
+static const char * device_addr_string = "D4:61:2E:12:67:7A";
 // Wiko Sunny: static const char * device_addr_string = "A0-4C-5B-0F-B2-42";
 // pts: static const char * device_addr_string = "00:1B:DC:08:0A:A5";
 

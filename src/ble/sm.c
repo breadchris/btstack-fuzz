@@ -3946,11 +3946,12 @@ void sm_request_pairing(hci_con_handle_t con_handle){
         // used as a trigger to start central/master/initiator security procedures
         if (sm_conn->sm_engine_state == SM_INITIATOR_CONNECTED){
             uint8_t ltk[16];
+            int have_ltk;
             switch (sm_conn->sm_irk_lookup_state){
                 case IRK_LOOKUP_SUCCEEDED:
 #ifndef ENABLE_LE_CENTRAL_AUTO_ENCRYPTION
                     le_device_db_encryption_get(sm_conn->sm_le_db_index, NULL, NULL, ltk, NULL, NULL, NULL);
-                    int have_ltk = !sm_is_null_key(ltk);
+                    have_ltk = !sm_is_null_key(ltk);
                     log_info("have ltk %u", have_ltk);
                     // trigger 'pairing complete' event on encryption change
                     sm_conn->sm_pairing_requested = 1;

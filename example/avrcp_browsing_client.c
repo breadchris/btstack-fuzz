@@ -442,6 +442,19 @@ static void show_usage(void){
 }
 #endif
 
+void do_avrcp_controller_connect() {
+    avrcp_connection_t *connection = avrcp_create_connection(remote_addr, &avrcp_controller_context);
+    if (!connection){
+        log_error("avrcp: could not allocate connection struct.");
+    }
+    
+    avrcp_cid = connection->avrcp_cid;
+
+    connection->browsing_l2cap_psm = 0x1b;
+    connection->state = AVCTP_CONNECTION_W4_L2CAP_CONNECTED;
+    l2cap_create_channel(avrcp_controller_context.avrcp_callback, connection->remote_addr, connection->browsing_l2cap_psm, l2cap_max_mtu(), NULL);
+    avrcp_connected = 1;
+}
 
 #ifdef HAVE_BTSTACK_STDIN
 static void stdin_process(char cmd){
@@ -458,6 +471,7 @@ static void stdin_process(char cmd){
         case 'c':
             printf(" - Create AVRCP connection for control to addr %s.\n", bd_addr_to_str(remote_addr));
             status = avrcp_controller_connect(remote_addr, &avrcp_cid);
+            //do_avrcp_controller_connect();
             break;
         case 'C':
             if (avrcp_connected){
