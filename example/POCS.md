@@ -299,6 +299,36 @@ static tAVRC_STS avrc_ctrl_pars_vendor_rsp(tAVRC_MSG_VENDOR* p_msg,
 * BNEP ID - https://android.googlesource.com/platform/system/bt/+/a50e70468c0a8d207e416e273d05a08635bdd45f
 * SDP ID - https://android.googlesource.com/platform/system/bt/+/0627e76edefd948dc3efe11564d7e53d56aac80c
 * bta gattc RCE - https://android.googlesource.com/platform/system/bt/+/68a1cf1a9de115b66bececf892588075595b263f
+* ble l2cap retransmission RCE - https://android.googlesource.com/platform/system/bt/+/488aa8befd5bdffed6cfca7a399d2266ffd201fb
+void l2c_lcc_proc_pdu(tL2C_CCB* p_ccb, BT_HDR* p_buf) {
+  uint8_t* p = (uint8_t*)(p_buf + 1) + p_buf->offset;
+  uint16_t sdu_length;
+  /* Buffer length should not exceed local mps */
+  if (p_buf->len > p_ccb->local_conn_cfg.mps) {
+    /* Discard the buffer */
+  }
+  if (p_ccb->is_first_seg) {
+    // If we do not have this check, then p_buf->len can be 0 or 1
+    if (p_buf->len < sizeof(sdu_length)) {
+      /* Discard the buffer */
+    }
+
+    STREAM_TO_UINT16(sdu_length, p);
+    /* Check the SDU Length with local MTU size */
+    if (sdu_length > p_ccb->local_conn_cfg.mtu) {
+      /* Discard the buffer */
+    }
+    if (sdu_length < p_buf->len) {
+      /* Discard the buffer */
+    }
+    p_data = (BT_HDR*)osi_malloc(BT_HDR_SIZE + sdu_length);
+
+    p_buf->len -= sizeof(sdu_length);
+  }
+
+  // p_buf->len could be super huge
+  memcpy((uint8_t*)(p_data + 1) + p_data->offset + p_data->len,
+         (uint8_t*)(p_buf + 1) + p_buf->offset, p_buf->len);
 
 ## Potential bugs
 https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/src/sdpd-request.c:517 rsp_count is used in copy length
