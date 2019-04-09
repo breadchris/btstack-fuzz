@@ -1,5 +1,12 @@
 # Bluetooth POCs
 
+## POCs to make
+* https://android.googlesource.com/platform/system/bt/+/2d21e75aa8c1e0c4adf178a1330f9f5c573ca045%5E%21/#F0
+* ble l2cap rce - https://android.googlesource.com/platform/system/bt/+/488aa8befd5bdffed6cfca7a399d2266ffd201fb%5E%21/#F0
+* https://android.googlesource.com/platform/system/bt/+/11fb7aa03437eccac98d90ca2de1730a02a515e2%5E%21/#F0
+* https://android.googlesource.com/platform/system/bt/+/297598898683b81e921474e6e74c0ddaedbb8bb5%5E%21/#F0
+* https://android.googlesource.com/platform/system/bt/+/94d718eb61cbb1e6fd08288039d7e62913735c6c
+
 Bluebourne papers
 * Finding bugs: https://go.armis.com/hubfs/BlueBorne%20Technical%20White%20Paper-1.pdf?t=1530135549212
 * Exploiting Android: https://go.armis.com/hubfs/BlueBorne%20-%20Android%20Exploit.pdf
@@ -110,7 +117,7 @@ static void sdp_copy_raw_data(tCONN_CB* p_ccb, bool offset) {
     cpy_len = p_ccb->p_db->raw_size - p_ccb->p_db->raw_used;
     list_len = p_ccb->list_len;
      p = &p_ccb->rsp_list[0];
- 
+
      if (offset) {
 +      cpy_len -= 1;
        type = *p++;
@@ -332,5 +339,4 @@ void l2c_lcc_proc_pdu(tL2C_CCB* p_ccb, BT_HDR* p_buf) {
 
 ## Potential bugs
 https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/src/sdpd-request.c:517 rsp_count is used in copy length
-https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/src/sdpd-request.c:257 possible use after free 
-
+https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/src/sdpd-request.c:257 possible use after free
