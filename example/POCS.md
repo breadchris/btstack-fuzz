@@ -23,7 +23,9 @@ Bluebourne papers
 
 ### Android Security Advisories
 * Bluetooth Pineapple: https://android.googlesource.com/platform/system/bt/+/1e77fefc8b9c832239e1b32c6a6880376065e24e
-* ID - "In avrc_ctrl_pars_vendor_rsp of avrc_pars_ct.c, there is a possible out of bounds read due to a missing bounds check." - https://android.googlesource.com/platform/system/bt/+/99d54d0c7dbab6c80f15bbf886ed203b2a547453
+* ID - "In avrc_ctrl_pars_vendor_rsp of avrc_pars_ct.c, there is a possible out of bounds read due to a missing bounds check." https://android.googlesource.com/platform/system/bt/+/99d54d0c7dbab6c80f15bbf886ed203b2a547453
+
+```
 -void avrc_parse_notification_rsp(uint8_t* p_stream,
 -                                 tAVRC_REG_NOTIF_RSP* p_rsp) {
 +tAVRC_STS avrc_parse_notification_rsp(uint8_t* p_stream, uint16_t len,
@@ -38,9 +40,12 @@ Bluebourne papers
 +      if (len < min_len) goto length_error;
        BE_STREAM_TO_UINT8(p_rsp->param.play_status, p_stream);
        break;
+```
 
 * ID - https://android.googlesource.com/platform/system/bt/+/cc364611362cc5bc896b400bdc471a617d1ac628
 * RCE (Easy to exploit) - https://android.googlesource.com/platform/system/bt/+/ebc284cf3a59ee5cf7c06af88c2f3bcd0480e3e9
+
+```
 static tAVRC_STS avrc_ctrl_pars_vendor_rsp(tAVRC_MSG_VENDOR* p_msg,
                                            tAVRC_RESPONSE* p_result,
                                            uint8_t* p_buf, uint16_t* buf_len) {
@@ -98,6 +103,8 @@ static tAVRC_STS avrc_ctrl_pars_vendor_rsp(tAVRC_MSG_VENDOR* p_msg,
        for (int xx = 0; xx < p_result->list_app_values.num_val; xx++) {
         BE_STREAM_TO_UINT8(p_result->list_app_values.vals[xx], p);
       }
+```
+      
 * ID - https://android.googlesource.com/platform/system/bt/+/11fb7aa03437eccac98d90ca2de1730a02a515e2
 static void sdp_copy_raw_data(tCONN_CB* p_ccb, bool offset) {
   unsigned int cpy_len, rem_len;
