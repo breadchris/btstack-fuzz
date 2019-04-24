@@ -42,7 +42,7 @@ Bluebourne papers
        break;
 ```
 
-* ID - https://android.googlesource.com/platform/system/bt/+/cc364611362cc5bc896b400bdc471a617d1ac628
+* ID in AVRCP - https://android.googlesource.com/platform/system/bt/+/cc364611362cc5bc896b400bdc471a617d1ac628
 * RCE (Easy to exploit) - https://android.googlesource.com/platform/system/bt/+/ebc284cf3a59ee5cf7c06af88c2f3bcd0480e3e9
 
 ```
@@ -104,8 +104,9 @@ static tAVRC_STS avrc_ctrl_pars_vendor_rsp(tAVRC_MSG_VENDOR* p_msg,
         BE_STREAM_TO_UINT8(p_result->list_app_values.vals[xx], p);
       }
 ```
-      
-* ID - https://android.googlesource.com/platform/system/bt/+/11fb7aa03437eccac98d90ca2de1730a02a515e2
+
+* ID in SDP - https://android.googlesource.com/platform/system/bt/+/11fb7aa03437eccac98d90ca2de1730a02a515e2
+```
 static void sdp_copy_raw_data(tCONN_CB* p_ccb, bool offset) {
   unsigned int cpy_len, rem_len;
   uint32_t list_len;
@@ -146,17 +147,19 @@ static void sdp_copy_raw_data(tCONN_CB* p_ccb, bool offset) {
     }
     memcpy(&p_ccb->p_db->raw_data[p_ccb->p_db->raw_used], p, cpy_len);
     p_ccb->p_db->raw_used += cpy_len;
-* ID - https://android.googlesource.com/platform/system/bt/+/92a7bf8c44a236607c146240f3c0adc1ae01fedf, https://android.googlesource.com/platform/system/bt/+/d4a34fefbf292d1e02336e4e272da3ef1e3eef85, https://android.googlesource.com/platform/system/bt/+/9fe27a9b445f7e911286ed31c1087ceac567736b
-* ID - https://android.googlesource.com/platform/system/bt/+/5216e6120160b28d76e9ee4dff9995e772647511
-* ID - https://android.googlesource.com/platform/system/bt/+/830cb39cb2a0f1bf6704d264e2a5c5029c175dd7
-* ID - https://android.googlesource.com/platform/system/bt/+/30cec963095366536ca0b1306089154e09bfe1a9
-* ID - https://android.googlesource.com/platform/system/bt/+/e8bbf5b0889790cf8616f4004867f0ff656f0551
-* ID - https://android.googlesource.com/platform/system/bt/+/198888b8e0163bab7a417161c63e483804ae8e31
-* ID - https://android.googlesource.com/platform/system/bt/+/6e4b8e505173f803a5fc05abc09f64eef89dc308
-* ID - https://android.googlesource.com/platform/system/bt/+/75c22982624fb530bc1d57aba6c1e46e7881d6ba
+```
+* ID in RFCOMM - https://android.googlesource.com/platform/system/bt/+/92a7bf8c44a236607c146240f3c0adc1ae01fedf, https://android.googlesource.com/platform/system/bt/+/d4a34fefbf292d1e02336e4e272da3ef1e3eef85, https://android.googlesource.com/platform/system/bt/+/9fe27a9b445f7e911286ed31c1087ceac567736b
+* ID in MCAP - https://android.googlesource.com/platform/system/bt/+/5216e6120160b28d76e9ee4dff9995e772647511
+* ID in AVRCP - https://android.googlesource.com/platform/system/bt/+/830cb39cb2a0f1bf6704d264e2a5c5029c175dd7
+* ID in AVRCP - https://android.googlesource.com/platform/system/bt/+/30cec963095366536ca0b1306089154e09bfe1a9
+* ID in SMP - https://android.googlesource.com/platform/system/bt/+/e8bbf5b0889790cf8616f4004867f0ff656f0551
+* ID in SMP - https://android.googlesource.com/platform/system/bt/+/198888b8e0163bab7a417161c63e483804ae8e31
+* ID in SMP - https://android.googlesource.com/platform/system/bt/+/6e4b8e505173f803a5fc05abc09f64eef89dc308
+* ID in HID - https://android.googlesource.com/platform/system/bt/+/75c22982624fb530bc1d57aba6c1e46e7881d6ba
 * Out of Bounds read in l2cap - https://android.googlesource.com/platform/system/bt/+/d5b44f6522c3294d6f5fd71bc6670f625f716460
 * L2ble OOB read - https://android.googlesource.com/platform/system/bt/+/bdbabb2ca4ebb4dc5971d3d42cb12f8048e23a23
 * l2cap check length - https://android.googlesource.com/platform/system/bt/+/bc6aef4f29387d07e0c638c9db810c6c1193f75b
+```
 static void hidh_l2cif_data_ind(uint16_t l2cap_cid, BT_HDR* p_msg) {
 ...
 +  if (p_msg->len < 1) {
@@ -170,7 +173,7 @@ static void hidh_l2cif_data_ind(uint16_t l2cap_cid, BT_HDR* p_msg) {
    ttype = HID_GET_TRANS_FROM_HDR(*p_data); // p_data has data from the server that will get leaked
    param = HID_GET_PARAM_FROM_HDR(*p_data);
    rep_type = param & HID_PAR_REP_TYPE_MASK;
-
+```
 * RCE SMP (Check p_cb->role in smp_br_state_machine_event) - https://android.googlesource.com/platform/system/bt/+/49acada519d088d8edf37e48640c76ea5c70e010
 	*   if (p_cb->role > HCI_ROLE_SLAVE) { --> state_table = smp_br_state_table[curr_state][p_cb->role];
 	* Attacker supplied p_cb->role had ended up being used to lookup index in smp_br_state_table, letting you specify what function you wanted to call
@@ -178,6 +181,7 @@ static void hidh_l2cif_data_ind(uint16_t l2cap_cid, BT_HDR* p_msg) {
 * RCE - https://android.googlesource.com/platform/system/bt/+/bc259b4926a6f9b33b9ee2c917cd83a55f360cbf
 since the original packet is being reused, we are copying a certain number of bytes past the end?
 not too sure about this one
+```
 avrc_proc_vendor_command
    if (status != AVRC_STS_NO_ERROR) {
 -    /* use the current GKI buffer to build/send the reject message */
@@ -194,12 +198,14 @@ avrc_proc_vendor_command
 -    p_rsp = p_pkt;
 +    p_rsp->len = AVRC_VENDOR_HDR_SIZE + 5;
    }
+```
 * ID in BNEP - https://android.googlesource.com/platform/system/bt/+/289a49814aef7f0f0bb98aac8246080abdfeac01
 * ID in BNEP - https://android.googlesource.com/platform/system/bt/+/289a49814aef7f0f0bb98aac8246080abdfeac01
 * ID - https://android.googlesource.com/platform/system/bt/+/13294c70a66347c9e5d05b9f92f8ceb6fe38d7f6
 * ID - https://android.googlesource.com/platform/system/bt/+/cb6a56b1d8cdab7c495ea8f53dcbdb3cfc9477d2
 * l2c ble ID - https://android.googlesource.com/platform/system/bt/+/f1c2c86080bcd7b3142ff821441696fc99c2bc9a
 * RCE in SDP while processing data returned when looking up records - https://android.googlesource.com/platform/system/bt/+/99a263a7f04c5c6f101388007baa18cf1e8c30bf
+```
 // stack based buffer overflow - Stack array of arrays which has a set length, but will copy how every many times the client told it to
 /*******************************************************************************
  *
@@ -239,6 +245,7 @@ void bta_dm_sdp_result(tBTA_DM_MSG* p_data) {
            }
          }
        } while (p_sdp_rec);
+```
 * RCE in PAN - https://android.googlesource.com/platform/system/bt/+/d7d4d5686b2e3c37c7bf10a6a2adff1c95251a13
 
 	```
@@ -271,6 +278,7 @@ void bta_dm_sdp_result(tBTA_DM_MSG* p_data) {
 * UNUSED_ATTR in length for gatt - https://android.googlesource.com/platform/system/bt/+/0d7c2f5a14d1055f3b4f69035451c66bf8f1b08e
 * Fix OOB read in process_l2cap_cmd - https://android.googlesource.com/platform/system/bt/+/b66fc16410ff96e9119f8eb282e67960e79075c8
 * RCE - https://android.googlesource.com/platform/system/bt/+/6ecbbc093f4383e90cbbf681cd55da1303a8ef94
+```
 static tAVRC_STS avrc_ctrl_pars_vendor_rsp(tAVRC_MSG_VENDOR* p_msg,
                                            tAVRC_RESPONSE* p_result,
                                            uint8_t* p_buf, uint16_t* buf_len) {
@@ -305,6 +313,7 @@ static tAVRC_STS avrc_ctrl_pars_vendor_rsp(tAVRC_MSG_VENDOR* p_msg,
         BE_STREAM_TO_UINT8(p_result->list_app_attr.attrs[xx], p);
       }
       break;
+```
 * SDP ID - https://android.googlesource.com/platform/system/bt/+/72b1cebaa9cc7ace841d887f0d4a4bf6daccde6e
 * SDP RCE - https://android.googlesource.com/platform/system/bt/+/f0edf6571d2d58e66ee0b100ebe49c585d31489f
 	* Integer underflow in process_service_attr_req, max_list_len is read from request
@@ -314,6 +323,7 @@ static tAVRC_STS avrc_ctrl_pars_vendor_rsp(tAVRC_MSG_VENDOR* p_msg,
 * SDP ID - https://android.googlesource.com/platform/system/bt/+/0627e76edefd948dc3efe11564d7e53d56aac80c
 * bta gattc RCE - https://android.googlesource.com/platform/system/bt/+/68a1cf1a9de115b66bececf892588075595b263f
 * ble l2cap retransmission RCE - https://android.googlesource.com/platform/system/bt/+/488aa8befd5bdffed6cfca7a399d2266ffd201fb
+```
 void l2c_lcc_proc_pdu(tL2C_CCB* p_ccb, BT_HDR* p_buf) {
   uint8_t* p = (uint8_t*)(p_buf + 1) + p_buf->offset;
   uint16_t sdu_length;
@@ -343,6 +353,9 @@ void l2c_lcc_proc_pdu(tL2C_CCB* p_ccb, BT_HDR* p_buf) {
   // p_buf->len could be super huge
   memcpy((uint8_t*)(p_data + 1) + p_data->offset + p_data->len,
          (uint8_t*)(p_buf + 1) + p_buf->offset, p_buf->len);
+```
+* SMP use after free: https://android.googlesource.com/platform/system/bt/+/fe621261a1f66463df71cfef2bdd037374e3c6b2
+* L2CAP ID: https://android.googlesource.com/platform/system/bt/+/5474692f71bebb42e3fb4bee019abdf8908637ec
 
 ## Potential bugs
 https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/src/sdpd-request.c:517 rsp_count is used in copy length

@@ -1,3 +1,5 @@
+__int64 _os_log_error_impl(_QWORD, _QWORD, _QWORD, const char *, ...) __int64 _os_log_impl(_QWORD, _QWORD, _QWORD, const char *, ...)
+
 typedef struct
 {
     uint16_t psm;
