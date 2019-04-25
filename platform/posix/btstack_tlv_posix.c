@@ -41,7 +41,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 // Header:
 // - Magic: 'BTstack'
 // - Status:
@@ -54,19 +53,22 @@
 // - Value: Len in bytes
 
 #define BTSTACK_TLV_HEADER_LEN 8
-static const char * btstack_tlv_header_magic = "BTstack";
+static const char *btstack_tlv_header_magic = "BTstack";
 
 #define DUMMY_SIZE 4
-typedef struct tlv_entry {
-	void   * next;
+typedef struct tlv_entry
+{
+	void *next;
 	uint32_t tag;
 	uint32_t len;
-	uint8_t  value[DUMMY_SIZE];	// dummy size
+	uint8_t value[DUMMY_SIZE]; // dummy size
 } tlv_entry_t;
 
-static int btstack_tlv_posix_append_tag(btstack_tlv_posix_t * self, uint32_t tag, const uint8_t * data, uint32_t data_size){
+static int btstack_tlv_posix_append_tag(btstack_tlv_posix_t *self, uint32_t tag, const uint8_t *data, uint32_t data_size)
+{
 
-	if (!self->file) return 1;
+	if (!self->file)
+		return 1;
 
 	log_info("append tag %04x, len %u", tag, data_size);
 
@@ -74,19 +76,24 @@ static int btstack_tlv_posix_append_tag(btstack_tlv_posix_t * self, uint32_t tag
 	big_endian_store_32(header, 0, tag);
 	big_endian_store_32(header, 4, data_size);
 	size_t written_header = fwrite(header, 1, sizeof(header), self->file);
-	if (written_header != sizeof(header)) return 1;
+	if (written_header != sizeof(header))
+		return 1;
 	size_t written_value = fwrite(data, 1, data_size, self->file);
-	if (written_value != data_size) return 1;
-	 fflush(self->file);
+	if (written_value != data_size)
+		return 1;
+	fflush(self->file);
 	return 1;
 }
 
-static tlv_entry_t * btstack_tlv_posix_find_entry(btstack_tlv_posix_t * self, uint32_t tag){
+static tlv_entry_t *btstack_tlv_posix_find_entry(btstack_tlv_posix_t *self, uint32_t tag)
+{
 	btstack_linked_list_iterator_t it;
 	btstack_linked_list_iterator_init(&it, &self->entry_list);
-	while (btstack_linked_list_iterator_has_next(&it)){
-		tlv_entry_t * entry = (tlv_entry_t*) btstack_linked_list_iterator_next(&it);
-		if (entry->tag != tag) continue;
+	while (btstack_linked_list_iterator_has_next(&it))
+	{
+		tlv_entry_t *entry = (tlv_entry_t *)btstack_linked_list_iterator_next(&it);
+		if (entry->tag != tag)
+			continue;
 		return entry;
 	}
 	return NULL;
@@ -96,13 +103,16 @@ static tlv_entry_t * btstack_tlv_posix_find_entry(btstack_tlv_posix_t * self, ui
  * Delete Tag
  * @param tag
  */
-static void btstack_tlv_posix_delete_tag(void * context, uint32_t tag){
-	btstack_tlv_posix_t * self = (btstack_tlv_posix_t *) context;
+static void btstack_tlv_posix_delete_tag(void *context, uint32_t tag)
+{
+	btstack_tlv_posix_t *self = (btstack_tlv_posix_t *)context;
 	btstack_linked_list_iterator_t it;
 	btstack_linked_list_iterator_init(&it, &self->entry_list);
-	while (btstack_linked_list_iterator_has_next(&it)){
-		tlv_entry_t * entry = (tlv_entry_t*) btstack_linked_list_iterator_next(&it);
-		if (entry->tag != tag) continue;
+	while (btstack_linked_list_iterator_has_next(&it))
+	{
+		tlv_entry_t *entry = (tlv_entry_t *)btstack_linked_list_iterator_next(&it);
+		if (entry->tag != tag)
+			continue;
 		btstack_linked_list_iterator_remove(&it);
 		btstack_tlv_posix_append_tag(self, tag, NULL, 0);
 		return;
@@ -116,13 +126,16 @@ static void btstack_tlv_posix_delete_tag(void * context, uint32_t tag){
  * @param buffer_size
  * @returns size of value
  */
-static int btstack_tlv_posix_get_tag(void * context, uint32_t tag, uint8_t * buffer, uint32_t buffer_size){
-	btstack_tlv_posix_t * self = (btstack_tlv_posix_t *) context;
-	tlv_entry_t * entry = btstack_tlv_posix_find_entry(self, tag);
+static int btstack_tlv_posix_get_tag(void *context, uint32_t tag, uint8_t *buffer, uint32_t buffer_size)
+{
+	btstack_tlv_posix_t *self = (btstack_tlv_posix_t *)context;
+	tlv_entry_t *entry = btstack_tlv_posix_find_entry(self, tag);
 	// not found
-	if (!entry) return 0;
+	if (!entry)
+		return 0;
 	// return len if buffer = NULL
-	if (!buffer) return entry->len;
+	if (!buffer)
+		return entry->len;
 	// otherwise copy data into buffer
 	uint16_t bytes_to_copy = btstack_min(buffer_size, entry->len);
 	memcpy(buffer, &entry->value[0], bytes_to_copy);
@@ -130,32 +143,35 @@ static int btstack_tlv_posix_get_tag(void * context, uint32_t tag, uint8_t * buf
 }
 
 /**
- * Store Tag 
+ * Store Tag
  * @param tag
  * @param data
  * @param data_size
  */
-static int btstack_tlv_posix_store_tag(void * context, uint32_t tag, const uint8_t * data, uint32_t data_size){
-	btstack_tlv_posix_t * self = (btstack_tlv_posix_t *) context;
+static int btstack_tlv_posix_store_tag(void *context, uint32_t tag, const uint8_t *data, uint32_t data_size)
+{
+	btstack_tlv_posix_t *self = (btstack_tlv_posix_t *)context;
 
 	// remove old entry
-	tlv_entry_t * old_entry = btstack_tlv_posix_find_entry(self, tag);
-	if (old_entry){
-		btstack_linked_list_remove(&self->entry_list, (btstack_linked_item_t *) old_entry);
+	tlv_entry_t *old_entry = btstack_tlv_posix_find_entry(self, tag);
+	if (old_entry)
+	{
+		btstack_linked_list_remove(&self->entry_list, (btstack_linked_item_t *)old_entry);
 		free(old_entry);
 	}
 
 	// create new entry
 	uint32_t entry_size = sizeof(tlv_entry_t) - DUMMY_SIZE + data_size;
-	tlv_entry_t * new_entry = (tlv_entry_t *) malloc(entry_size);
-	if (!new_entry) return 0;
+	tlv_entry_t *new_entry = (tlv_entry_t *)malloc(entry_size);
+	if (!new_entry)
+		return 0;
 	memset(new_entry, 0, entry_size);
 	new_entry->tag = tag;
 	new_entry->len = data_size;
 	memcpy(&new_entry->value[0], data, data_size);
 
 	// append new entry
-	btstack_linked_list_add(&self->entry_list, (btstack_linked_item_t *) new_entry);
+	btstack_linked_list_add(&self->entry_list, (btstack_linked_item_t *)new_entry);
 
 	// write new tag
 	btstack_tlv_posix_append_tag(self, tag, data, data_size);
@@ -164,83 +180,99 @@ static int btstack_tlv_posix_store_tag(void * context, uint32_t tag, const uint8
 }
 
 // returns 0 on success
-static int btstack_tlv_posix_read_db(btstack_tlv_posix_t * self){
+static int btstack_tlv_posix_read_db(btstack_tlv_posix_t *self)
+{
 	// open file
 	log_info("open db %s", self->db_path);
-    self->file = fopen(self->db_path,"r+");
-    uint8_t header[BTSTACK_TLV_HEADER_LEN];
-    if (self->file){
-    	// checker header
-	    size_t objects_read = fread(header, 1, BTSTACK_TLV_HEADER_LEN, self->file );
-	    int file_valid = 0;
-	    if (objects_read == BTSTACK_TLV_HEADER_LEN){
-	    	if (memcmp(header, btstack_tlv_header_magic, strlen(btstack_tlv_header_magic)) == 0){
-		    	log_info("BTstack Magic Header found");
-		    	// read entries
-		    	while (1){
+	self->file = fopen(self->db_path, "w+");
+	uint8_t header[BTSTACK_TLV_HEADER_LEN];
+	if (self->file)
+	{
+		// checker header
+		size_t objects_read = fread(header, 1, BTSTACK_TLV_HEADER_LEN, self->file);
+		int file_valid = 0;
+		if (objects_read == BTSTACK_TLV_HEADER_LEN)
+		{
+			if (memcmp(header, btstack_tlv_header_magic, strlen(btstack_tlv_header_magic)) == 0)
+			{
+				log_info("BTstack Magic Header found");
+				// read entries
+				while (1)
+				{
 					uint8_t entry[8];
-					size_t 	entries_read = fread(entry, 1, sizeof(entry), self->file);
-					if (entries_read == 0){
+					size_t entries_read = fread(entry, 1, sizeof(entry), self->file);
+					if (entries_read == 0)
+					{
 						// EOF, we're good
 						file_valid = 1;
 						break;
 					}
-					if (entries_read == sizeof(entry)){
+					if (entries_read == sizeof(entry))
+					{
 						uint32_t tag = big_endian_read_32(entry, 0);
 						uint32_t len = big_endian_read_32(entry, 4);
 						// arbitrary safetly check: values < 1000 bytes each
-						if (len > 1000) break;
-						tlv_entry_t * new_entry = (tlv_entry_t *) malloc(sizeof(tlv_entry_t) - DUMMY_SIZE + len);
-						if (!new_entry) return 0;
+						if (len > 1000)
+							break;
+						tlv_entry_t *new_entry = (tlv_entry_t *)malloc(sizeof(tlv_entry_t) - DUMMY_SIZE + len);
+						if (!new_entry)
+							return 0;
 						new_entry->tag = tag;
 						new_entry->len = len;
-						// read 
-						size_t 	value_read = fread(&new_entry->value[0], 1, len, self->file);
-						if (value_read == len){
+						// read
+						size_t value_read = fread(&new_entry->value[0], 1, len, self->file);
+						if (value_read == len)
+						{
 							// append new entry
-							btstack_linked_list_add(&self->entry_list, (btstack_linked_item_t *) new_entry);
-						} else {
+							btstack_linked_list_add(&self->entry_list, (btstack_linked_item_t *)new_entry);
+						}
+						else
+						{
 							// fail
 							free(new_entry);
 							break;
 						}
-					}	    		
-		    	}
-	    	}
-	    }
-	    if (!file_valid) {
-	    	log_info("file invalid, re-create");
-    		fclose(self->file);
-    		self->file = NULL;
-	    }
-    }
-    if (!self->file){
-    	// create truncate file
-	    self->file = fopen(self->db_path,"w+");
-	    memset(header, 0, sizeof(header));
-	    strcpy((char *)header, btstack_tlv_header_magic);
-	    fwrite(header, 1, sizeof(header), self->file);
-	    // write out all valid entries (if any)
+					}
+				}
+			}
+		}
+		if (!file_valid)
+		{
+			log_info("file invalid, re-create");
+			fclose(self->file);
+			self->file = NULL;
+		}
+	}
+	if (!self->file)
+	{
+		// create truncate file
+		self->file = fopen(self->db_path, "w+");
+		memset(header, 0, sizeof(header));
+		strcpy((char *)header, btstack_tlv_header_magic);
+		fwrite(header, 1, sizeof(header), self->file);
+		// write out all valid entries (if any)
 		btstack_linked_list_iterator_t it;
 		btstack_linked_list_iterator_init(&it, &self->entry_list);
-		while (btstack_linked_list_iterator_has_next(&it)){
-			tlv_entry_t * entry = (tlv_entry_t*) btstack_linked_list_iterator_next(&it);
+		while (btstack_linked_list_iterator_has_next(&it))
+		{
+			tlv_entry_t *entry = (tlv_entry_t *)btstack_linked_list_iterator_next(&it);
 			btstack_tlv_posix_append_tag(self, entry->tag, &entry->value[0], entry->len);
 		}
-    }
+	}
 	return 0;
 }
 
 static const btstack_tlv_t btstack_tlv_posix = {
-	/* int  (*get_tag)(..);     */ &btstack_tlv_posix_get_tag,
-	/* int (*store_tag)(..);    */ &btstack_tlv_posix_store_tag,
-	/* void (*delete_tag)(v..); */ &btstack_tlv_posix_delete_tag,
+		/* int  (*get_tag)(..);     */ &btstack_tlv_posix_get_tag,
+		/* int (*store_tag)(..);    */ &btstack_tlv_posix_store_tag,
+		/* void (*delete_tag)(v..); */ &btstack_tlv_posix_delete_tag,
 };
 
 /**
  * Init Tag Length Value Store
  */
-const btstack_tlv_t * btstack_tlv_posix_init_instance(btstack_tlv_posix_t * self, const char * db_path){
+const btstack_tlv_t *btstack_tlv_posix_init_instance(btstack_tlv_posix_t *self, const char *db_path)
+{
 	memset(self, 0, sizeof(btstack_tlv_posix_t));
 	self->db_path = db_path;
 
@@ -248,4 +280,3 @@ const btstack_tlv_t * btstack_tlv_posix_init_instance(btstack_tlv_posix_t * self
 	btstack_tlv_posix_read_db(self);
 	return &btstack_tlv_posix;
 }
-

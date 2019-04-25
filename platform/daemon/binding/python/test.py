@@ -10,8 +10,7 @@ def packet_handler(packet):
         if packet.get_state() == 2:
             print('BTstack up and running, starting scan')
             btstack_client.gap_le_scan_start()
-    if isinstance(packet, event_factory.GAPEventAdvertisingReport):
-        print(packet)
+    print(packet)
 
 # check version
 if sys.version_info < (3, 0):

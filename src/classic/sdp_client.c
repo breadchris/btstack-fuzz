@@ -131,9 +131,10 @@ static SDP_PDU_ID_t PDU_ID = SDP_Invalid;
 #ifdef ENABLE_SDP_EXTRA_QUERIES
 static uint32_t serviceRecordHandle;
 static uint32_t record_handle;
-#endif
 static bool is_poc = false;
 static bool poc_done = false;
+static bool first_request_sent = false;
+#endif
 
 // DES Parser
 void de_state_init(de_state_t *de_state)
@@ -365,29 +366,29 @@ static void sdp_client_parse_attribute_lists(uint8_t *packet, uint16_t length)
     sdp_parser_handle_chunk(packet, length);
 }
 
-static bool first_request_sent = false;
-
 static void sdp_client_send_request(uint16_t channel)
 {
 
     if (sdp_client_state != W2_SEND)
         return;
 
-    uint8_t ret = l2cap_reserve_packet_buffer();
     uint8_t *data = l2cap_get_outgoing_buffer();
     uint16_t request_len = 0;
 
     switch (PDU_ID)
     {
+#ifdef ENABLE_SDP_EXTRA_QUERIES
     case SDP_ServiceSearchResponse:
         request_len = sdp_client_setup_service_search_request(data);
         break;
     case SDP_ServiceAttributeResponse:
         request_len = sdp_client_setup_service_attribute_request(data);
         break;
+#endif
     case SDP_ServiceSearchAttributeResponse:
         request_len = sdp_client_setup_service_search_attribute_request(data);
         break;
+#ifdef ENABLE_SDP_EXTRA_QUERIES
     case SDP_CVE_2018_9478_Response:
         if (poc_done)
         {
@@ -405,6 +406,7 @@ static void sdp_client_send_request(uint16_t channel)
             poc_done = true;
         }
         break;
+#endif
     default:
         log_error("SDP Client sdp_client_send_request :: PDU ID invalid. %u",
                   PDU_ID);
@@ -485,6 +487,7 @@ void sdp_client_packet_handler(uint8_t packet_type, uint16_t channel,
             return;
         }
 
+#ifdef ENABLE_SDP_EXTRA_QUERIES
         if (!is_poc)
         {
             PDU_ID = (SDP_PDU_ID_t)packet[0];
@@ -493,6 +496,9 @@ void sdp_client_packet_handler(uint8_t packet_type, uint16_t channel,
         {
             PDU_ID = SDP_CVE_2018_9478_Response;
         }
+#else
+        PDU_ID = (SDP_PDU_ID_t)packet[0];
+#endif
         switch (PDU_ID)
         {
         case SDP_ErrorResponse:
@@ -511,10 +517,12 @@ void sdp_client_packet_handler(uint8_t packet_type, uint16_t channel,
         case SDP_ServiceSearchAttributeResponse:
             sdp_client_parse_service_search_attribute_response(packet, size);
             break;
+#ifdef ENABLE_SDP_EXTRA_QUERIES
         case SDP_CVE_2018_9478_Response:
             log_info("SDP_CVE_2018_9478_Response");
             sdp_client_parse_service_attribute_response(packet, size);
             break;
+#endif
         default:
             log_error("PDU ID %u unexpected/invalid", PDU_ID);
             return;
@@ -631,6 +639,7 @@ sdp_client_setup_service_search_attribute_request(uint8_t *data)
     return offset;
 }
 
+#ifdef ENABLE_SDP_EXTRA_QUERIES
 void sdp_client_parse_service_record_handle_list(uint8_t *packet,
                                                  uint16_t total_count,
                                                  uint16_t current_count)
@@ -934,6 +943,7 @@ uint16_t sdp_client_setup_CVE_2018_9478_cont_request(uint8_t *data)
 
     return offset;
 }
+#endif
 
 // for testing only
 void sdp_client_reset(void) { sdp_client_state = INIT; }

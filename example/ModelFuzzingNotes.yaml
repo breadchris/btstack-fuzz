@@ -1,0 +1,22 @@
+# Model Fuzzing:
+- send:
+    type: HCI_CREATE_CONNECTION
+  wait:
+    type: HCI_EVENT_CONNECTION_COMPLETE
+    # Extract handle
+    action: CONT
+- send:
+    type: L2CAP_SIGNALLING
+    tags:
+      L2CAP_SIGNALLING_CMD: DISCONNECTION_REQUEST
+      L2CAP_SIGNALLING_FORMAT: ""
+  wait:
+    type: DISCONNECTION_RESPONSE
+    action: PRINT
+
+- send:
+    type:
+    psm: SDP
+  wait:
+    type: HCI_EVENT_CONNECTION_COMPLETE
+    action: CONT

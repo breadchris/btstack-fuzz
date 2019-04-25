@@ -23,7 +23,7 @@ class BTstackServer(object):
         path += "libBTstackServer.so"
         # TODO: check OS (mac,linux,windows)
         # TODO: construct path to load library from
-        btstack_server_library = cdll.LoadLibrary("../../../../port/daemon/src/libBTstackServer.so")
+        btstack_server_library = cdll.LoadLibrary("../../../../port/daemon/src/libBTstackServer.dylib")
 
     def set_storage_path(self, path):
         global btstack_server_library
