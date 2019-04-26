@@ -24,6 +24,9 @@ Bluetooth Blog Posts
   - Get source
   - Some helpful scripts for debugging
   - Try to replace bluetooth.so with this?
+* References
+  - Wikipedia (supprisingly really nice): https://en.wikipedia.org/wiki/List_of_Bluetooth_profiles
+  - A bunch of bluetooth stacks: https://en.wikipedia.org/wiki/Bluetooth_stack, no where near complete
 * HCI
   - SCO/Other thing?
   - Handles
@@ -59,6 +62,27 @@ Bluetooth Blog Posts
   - So many Android bugs
 * HID
 * OBEX
+
+## Random notes
+MacOS Stack written in objc
+iOS stack written in c
+Android
+BTStack
+Bluez
+Windows (in kernel)
+mynewt
+nimble - zephyr
+Toshiba
+
+Security Levels
+* btstack - src/l2cap.c:2232
+* fluoride - stack/btm/btm_sec.cc:2248
+* nimble - apache/mynewt-nimble apps/bttester/src/gap.c:1079
+* bluez - net/bluetooth/l2cap_cor.c:815
+
+Nist Guide for BT Security
+
+Windows Bluetooth drivers
 
 ## Random Code
 iOS Setting up LEAP layer

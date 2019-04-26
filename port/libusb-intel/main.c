@@ -48,6 +48,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <unistd.h>
+#include <getopt.h>
 
 #include "btstack_config.h"
 
@@ -71,12 +73,10 @@ static char tlv_db_path[100];
 static const btstack_tlv_t * tlv_impl;
 static btstack_tlv_posix_t   tlv_context;
 static bd_addr_t             local_addr;
-
-static int main_argc;
-static const char ** main_argv;
+static bd_addr_t remote_addr[6] = {};
 static const hci_transport_t * transport;
 
-int btstack_main(int argc, const char * argv[]);
+int btstack_main(int argc, const char** argv, bd_addr_t remote_addr);
 
 static btstack_packet_callback_registration_t hci_event_callback_registration;
 
@@ -140,65 +140,107 @@ static void intel_firmware_done(int result){
     // inform about BTstack state
     hci_event_callback_registration.callback = &packet_handler;
     hci_add_event_handler(&hci_event_callback_registration);
+}
 
-    // setup app
-    btstack_main(main_argc, main_argv);
+
+static void handle_dump_kind(char *arg, hci_dump_format_t *dump_kind) {
+    if (strcmp(arg, "stdout") == 0) {
+        *dump_kind = HCI_DUMP_STDOUT;
+    } else if (strcmp(arg, "packetlogger") == 0) {
+        *dump_kind = HCI_DUMP_PACKETLOGGER;
+    } else if (strcmp(arg, "bluez") == 0) {
+        *dump_kind = HCI_DUMP_BLUEZ;
+    }
+}
+
+static void handle_address(char *arg, bd_addr_t address) {
+    if (!sscanf_bd_addr(arg, address)) {
+        printf("Invalid address: %s\n", arg);
+        exit(-1);
+    }
 }
 
 #define USB_MAX_PATH_LEN 7
-int main(int argc, const char * argv[]){
+int main(int argc, char** argv){
+    // use logger: format HCI_DUMP_PACKETLOGGER, HCI_DUMP_BLUEZ or HCI_DUMP_STDOUT
+    hci_dump_format_t dump_kind = HCI_DUMP_PACKETLOGGER;
 
-    uint8_t usb_path[USB_MAX_PATH_LEN];
-    int usb_path_len = 0;
-    const char * usb_path_string = NULL;
-    if (argc >= 3 && strcmp(argv[1], "-u") == 0){
-        // parse command line options for "-u 11:22:33"
-        usb_path_string = argv[2];
-        printf("Specified USB Path: ");
-        while (1){
-            char * delimiter;
-            int port = strtol(usb_path_string, &delimiter, 16);
-            usb_path[usb_path_len] = port;
-            usb_path_len++;
-            printf("%02x ", port);
-            if (!delimiter) break;
-            if (*delimiter != ':' && *delimiter != '-') break;
-            usb_path_string = delimiter+1;
+    int c;
+    int digit_optind = 0;
+
+    while (1) {
+        int this_option_optind = optind ? optind : 1;
+        int option_index = 0;
+        const char *option_name;
+
+        static struct option long_options[] = {
+            {"dump",    required_argument, 0,  0 },
+            {"address", required_argument, 0,  0 },
+            {0,         0,                 0,  0 }
+        };
+
+        c = getopt_long(argc, argv, "uda",
+                 long_options, &option_index);
+        if (c == -1)
+            break;
+
+        switch (c) {
+        case 0:
+            option_name = long_options[option_index].name;
+            if (!optarg) {
+                printf("No option specified for: %s\n", option_name);
+                exit(-1);
+            }
+            if (strcmp(option_name, "dump") == 0) {
+                handle_dump_kind(optarg, &dump_kind);
+            } else if (strcmp(option_name, "address") == 0) {
+                handle_address(optarg, remote_addr);
+            }
+            break;
+
+        case '?':
+            break;
+
+        default:
+            printf("?? getopt returned character code 0%o ??\n", c);
         }
-        printf("\n");
-        argc -= 2;
-        memmove(&argv[1], &argv[3], (argc-1) * sizeof(char *));
     }
 
 	/// GET STARTED with BTstack ///
 	btstack_memory_init();
     btstack_run_loop_init(btstack_run_loop_posix_get_instance());
 	    
-    if (usb_path_len){
-        hci_transport_usb_set_path(usb_path_len, usb_path);
-    }
-
-    // use logger: format HCI_DUMP_PACKETLOGGER, HCI_DUMP_BLUEZ or HCI_DUMP_STDOUT
-
     char pklg_path[100];
     strcpy(pklg_path, "/tmp/hci_dump");
-    if (usb_path_len){
-        strcat(pklg_path, "_");
-        strcat(pklg_path, usb_path_string);
-    }
     strcat(pklg_path, ".pklg");
     printf("Packet Log: %s\n", pklg_path);
-    hci_dump_open(pklg_path, HCI_DUMP_STDOUT);
+    hci_dump_open(pklg_path, dump_kind);
 
-    // setup USB Transport
+    // init HCI
     transport = hci_transport_usb_instance();
     btstack_chipset_intel_download_firmware(transport, &intel_firmware_done);
+	hci_init(hci_transport_usb_instance(), NULL);
+
+#ifdef ENABLE_CLASSIC
+    hci_set_link_key_db(btstack_link_key_db_fs_instance());
+#endif    
+
+#ifdef HAVE_PORTAUDIO
+    btstack_audio_set_instance(btstack_audio_portaudio_get_instance());
+#endif
+
+    // inform about BTstack state
+    hci_event_callback_registration.callback = &packet_handler;
+    hci_add_event_handler(&hci_event_callback_registration);
 
     // handle CTRL-c
     signal(SIGINT, sigint_handler);
 
+    // setup app
+    btstack_main(argc, argv, remote_addr);
+
     // go
     btstack_run_loop_execute();    
 
-    return 0;
+    return 1;
 }

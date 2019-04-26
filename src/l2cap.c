@@ -142,12 +142,14 @@ static l2cap_signaling_response_t signaling_responses[NR_PENDING_SIGNALING_RESPO
 static int signaling_responses_pending;
 static btstack_packet_callback_registration_t hci_event_callback_registration;
 
+#define ENABLE_BLE
 #ifdef ENABLE_BLE
 // only used for connection parameter update events
 static btstack_packet_handler_t l2cap_event_packet_handler;
 static uint16_t l2cap_le_custom_max_mtu;
 #endif
 
+#define ENABLE_L2CAP_ENHANCED_RETRANSMISSION_MODE
 #ifdef ENABLE_L2CAP_ENHANCED_RETRANSMISSION_MODE
 
 // enable for testing
