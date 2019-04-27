@@ -50,6 +50,8 @@ I don't know if there are any?
 ## Attack Surface
 * Channels and their state are created and stored within the stack, abusing the state machine could lead to use-after-frees
 
+TODO: Go through each bluetooth stack and show what channels are registered (point out the weird iOS stuff)
+
 ## Stack Comparisions
 
 ## CVEs

