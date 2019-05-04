@@ -11,6 +11,7 @@
 ## Attack Surface
 * Not a whole lot going on since this layer is just in charge of talking to a controller and passing data along to higher levels
 * ECC attack for MiTM (TODO: Link)
+* What is interesting about the attack surface is that for each protocol, Android has a server and a client. For example, the Android phone can receive and parse SDP packets, as well as send them to a device it is in the process of connecting to. While we would typically need to find some triggering condition to have the client issue requests from us and parse their response, this is an interesting attack surface as it might be less likely developers will think about the security of parsing the response from the server. As we will see in the various protocol client applications, this was indeed the case.
 
 ## Stack Implementations
 Scapy: https://sourcegraph.com/github.com/secdev/scapy/-/blob/scapy/layers/bluetooth.py#L155
@@ -56,12 +57,64 @@ TODO: Go through each bluetooth stack and show what channels are registered (poi
 
 ## CVEs
 * CVE-2017-0781 (Allocate buffers of the right size when BT_HDR is included): https://android.googlesource.com/platform/system/bt/+/c513a8ff5cfdcc62cc14da354beb1dd22e56be0e
+* CVE-2018-9359 Fix OOB read in process_l2cap_cmd (signalling commands ID) - https://android.googlesource.com/platform/system/bt/+/b66fc16410ff96e9119f8eb282e67960e79075c8
+    * Pretty much no signalling commands were checking minimum length and variables read from the packet were sent back to the user
+    * For example:
+* CVE-2018-9419	l2c ble ID - https://android.googlesource.com/platform/system/bt/+/f1c2c86080bcd7b3142ff821441696fc99c2bc9a
+* CVE-2018-9555	l2cap RCE: https://android.googlesource.com/platform/system/bt/+/02fc52878d8dba16b860fbdf415b6e4425922b2c
+* ble l2cap retransmission RCE (regression of CVE-2018-9555) - https://android.googlesource.com/platform/system/bt/+/488aa8befd5bdffed6cfca7a399d2266ffd201fb
+```
+void l2c_lcc_proc_pdu(tL2C_CCB* p_ccb, BT_HDR* p_buf) {
+  uint8_t* p = (uint8_t*)(p_buf + 1) + p_buf->offset;
+  uint16_t sdu_length;
+  /* Buffer length should not exceed local mps */
+  if (p_buf->len > p_ccb->local_conn_cfg.mps) {
+    /* Discard the buffer */
+  }
+  if (p_ccb->is_first_seg) {
+    // If we do not have this check, then p_buf->len can be 0 or 1
+    if (p_buf->len < sizeof(sdu_length)) {
+      /* Discard the buffer */
+    }
 
-* Signalling channel information disclosures
-    - There is a common pattern through out the Android code base of packet lengths not being written
-* LE RCE
+    STREAM_TO_UINT16(sdu_length, p);
+    /* Check the SDU Length with local MTU size */
+    if (sdu_length > p_ccb->local_conn_cfg.mtu) {
+      /* Discard the buffer */
+    }
+    if (sdu_length < p_buf->len) {
+      /* Discard the buffer */
+    }
+    p_data = (BT_HDR*)osi_malloc(BT_HDR_SIZE + sdu_length);
+
+    p_buf->len -= sizeof(sdu_length);
+  }
+
+  // p_buf->len could be super huge
+  memcpy((uint8_t*)(p_data + 1) + p_data->offset + p_data->len,
+         (uint8_t*)(p_buf + 1) + p_buf->offset, p_buf->len);
+```
+* CVE-2018-9485	L2ble OOB read - https://android.googlesource.com/platform/system/bt/+/bdbabb2ca4ebb4dc5971d3d42cb12f8048e23a23
+* CVE-2018-9486 l2cap check length - https://android.googlesource.com/platform/system/bt/+/bc6aef4f29387d07e0c638c9db810c6c1193f75b
+```
+static void hidh_l2cif_data_ind(uint16_t l2cap_cid, BT_HDR* p_msg) {
+...
++  if (p_msg->len < 1) {
++    HIDH_TRACE_WARNING("Rcvd L2CAP data, invalid length %d, should be >= 1",
++                       p_msg->len);
++    osi_free(p_msg);
++    android_errorWriteLog(0x534e4554, "80493272");
++    return;
++  }
++
+   ttype = HID_GET_TRANS_FROM_HDR(*p_data); // p_data has data from the server that will get leaked
+   param = HID_GET_PARAM_FROM_HDR(*p_data);
+   rep_type = param & HID_PAR_REP_TYPE_MASK;
+```
+* CVE-2018-9484 Out of Bounds read in l2cap - https://android.googlesource.com/platform/system/bt/+/d5b44f6522c3294d6f5fd71bc6670f625f716460
+
 * That thing Joel sent
-* Tesla Keen Team report
+* Tesla Keen Team report - https://www.blackhat.com/docs/us-17/thursday/us-17-Nie-Free-Fall-Hacking-Tesla-From-Wireless-To-CAN-Bus-wp.pdf
 
 ## Interactive Example
 Let's run through an example POC 
