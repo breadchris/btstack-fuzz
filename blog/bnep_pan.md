@@ -1,6 +1,14 @@
 # BNEP and PAN
 
-## 
+## Notable Features
+### BNEP
+* Extension bits
+
+### PAN
+* Different roles PANU, NU
+
+## Attack Surface
+* 
 
 ## CVEs
 * CVE-2017-0782	(Add a missing check for PAN buffer size before copying data): https://android.googlesource.com/platform/system/bt/+/4e47f3db62bab524946c46efe04ed6a2b896b150 and (Add missing extension length check while parsing BNEP control packets

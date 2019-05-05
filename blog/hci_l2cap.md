@@ -46,7 +46,6 @@ I don't know if there are any?
     - The entrypoint for creating and configuring channels with a remote device (btstack l2cap_signalling.c:53)
 * classic (br/edr) and low-energy (le) exist in l2cap, their code paths somewhat merge 
     - This can be seen in btstack/src/l2cap.c:3443
-*
 
 ## Attack Surface
 * Channels and their state are created and stored within the stack, abusing the state machine could lead to use-after-frees

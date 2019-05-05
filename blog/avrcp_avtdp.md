@@ -5,7 +5,8 @@
 
 ## CVEs
 ### Android
-* CVE-2019-1996	ACRCP ID: https://android.googlesource.com/platform/system/bt/+/525bdbd6e1295ed8a081d2ae87105c64d6f1ac4f
+* CVE-2017-13281 really good length check in AVRCP: https://android.googlesource.com/platform/system/bt/+/6f3ddf3f5cf2b3eb52fb0adabd814a45cff07221%5E%21/
+* CVE-2019-1996	AVRCP ID: https://android.googlesource.com/platform/system/bt/+/525bdbd6e1295ed8a081d2ae87105c64d6f1ac4f
 * CVE-2018-9588	AVDP ID: https://android.googlesource.com/platform/system/bt/+/bf9ff0c5215861ab673e211cd06e009f3157aab2
 * CVE-2018-9542	ID in AVRCP - https://android.googlesource.com/platform/system/bt/+/cc364611362cc5bc896b400bdc471a617d1ac628
 * CVE-2017-13283 RCE (Easy to exploit) - https://android.googlesource.com/platform/system/bt/+/ebc284cf3a59ee5cf7c06af88c2f3bcd0480e3e9

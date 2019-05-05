@@ -15,6 +15,8 @@ TODO: Run sdp tool on each stack
 
 ## CVEs
 ### Android
+* CVE-2018-9478	SDP RCE: https://android.googlesource.com/platform/system/bt/+/68688194eade113ad31687a730e8d4102ada58d5
+    * Hard to exploit: You can cause memcpy to copy a huge amount of bytes onto the heap, but where you need to control data to write the heap cookie you aren't able to control it.
 * CVE-2018-9590	SDP ID: https://android.googlesource.com/platform/system/bt/+/297598898683b81e921474e6e74c0ddaedbb8bb5
 * CVE-2018-9566	SDP ID: https://android.googlesource.com/platform/system/bt/+/314336a22d781f54ed7394645a50f74d6743267d
 * CVE-2018-9562	SDP ID in client: https://android.googlesource.com/platform/system/bt/+/1bb14c41a72978c6075c5753a8301ddcbb10d409
