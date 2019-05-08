@@ -31,8 +31,6 @@ LDFLAGS += $(shell pkg-config libusb-1.0 --libs)
 csr_set_bd_addr: ${CORE_OBJ} ${COMMON_OBJ} btstack_chipset_csr.o csr_set_bd_addr.o
 	${CC} $^ ${CFLAGS} ${LDFLAGS} -o $@
 
-CFLAGS += -DENABLE_LOG_INFO=1 -DENABLE_SDP_EXTRA_QUERIES=1
-
 clean_src:
 	rm -rf * ${BTSTACK_ROOT}/src/*.o
 	rm -rf * ${BTSTACK_ROOT}/src/classic/*.o
@@ -41,6 +39,7 @@ clean_src:
 
 EXAMPLES = 					\
 	poc                     \
+	airpods                  \
 	gap_inquiry 			\
 	gap_le_search           \
 	gatt_battery_query      \

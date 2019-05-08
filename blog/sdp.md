@@ -5,13 +5,18 @@ This is probably the most sketch protocol in Bluetooth. There is a lot going on 
 ## Notable Features
 * The SDP `server` handles remote queries of the SDP database which contains information for all registered services for the device. For example...
 * The SDP `client` performs queries and parses their response
-* There are three different queries which can be performed: 
+* There are three different queries which can be performed: (TODO fill in these details)
+  * ServiceSearchRequest
+  * ServiceAttributeRequest
+  * ServiceSearchAttributeRequest
 * Queries are comprised of `data elements` which are type, length, value structures (seen here: btstack sdp_util.h:105)
+  *
 * The parsing is relatively complex, I think bluez's implementation is the clearest
-* If a response is too big, 
+* If a response is too big, a continuation state is created
 
 ## Attack Surface
 TODO: Run sdp tool on each stack
+<<<<<<< Updated upstream
 
 ## CVEs
 ### Android
@@ -109,3 +114,5 @@ void bta_dm_sdp_result(tBTA_DM_MSG* p_data) {
 	* Integer underflow in process_service_attr_req, max_list_len is read from request
 * CVE-2017-13290 SDP ID - https://android.googlesource.com/platform/system/bt/+/72b1cebaa9cc7ace841d887f0d4a4bf6daccde6e
 * CVE-2017-13259 SDP ID - https://android.googlesource.com/platform/system/bt/+/0627e76edefd948dc3efe11564d7e53d56aac80c
+=======
+>>>>>>> Stashed changes

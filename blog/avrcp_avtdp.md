@@ -3,6 +3,20 @@
 ## Notable Features
 * Controls audio
 
+## Stack Implementations
+* Need to pair with device to access it on Android
+
+Android:
+bta_av_api.h:
+```
+/* Set to TRUE if seperate authorization prompt desired for AVCTP besides A2DP
+ * authorization */
+/* Typically FALSE when AVRCP is used in conjunction with A2DP */
+#ifndef BTA_AV_WITH_AVCTP_AUTHORIZATION
+#define BTA_AV_WITH_AVCTP_AUTHORIZATION FALSE
+#endif
+```
+
 ## CVEs
 ### Android
 * CVE-2017-13281 really good length check in AVRCP: https://android.googlesource.com/platform/system/bt/+/6f3ddf3f5cf2b3eb52fb0adabd814a45cff07221%5E%21/
