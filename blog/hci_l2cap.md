@@ -58,12 +58,35 @@ TODO: Go through each bluetooth stack and show what channels are registered (poi
 ## Stack Comparisions
 
 ## CVEs
-* CVE-2017-0781 (Allocate buffers of the right size when BT_HDR is included): https://android.googlesource.com/platform/system/bt/+/c513a8ff5cfdcc62cc14da354beb1dd22e56be0e
+* CVE-2017-0781 RCE (Allocate buffers of the right size when BT_HDR is included): https://android.googlesource.com/platform/system/bt/+/c513a8ff5cfdcc62cc14da354beb1dd22e56be0e
+  - Vuln used by Bluebourne in their exploit POC, the code when run would cause a heap overflow due to the allocation being too small
+  ```
+  p_bcb->p_pending_data = (BT_HDR*)osi_malloc(rem_len + sizeof(BT_HDR));
+  memcpy((uint8_t*)(p_bcb->p_pending_data + 1), p, rem_len);
+  ```
 * CVE-2018-9359 Fix OOB read in process_l2cap_cmd (signalling commands ID) - https://android.googlesource.com/platform/system/bt/+/b66fc16410ff96e9119f8eb282e67960e79075c8
-    * Pretty much no signalling commands were checking minimum length and variables read from the packet were sent back to the user
-    * For example:
+  - Pretty much no signalling commands were checking minimum length and variables read from the packet were sent back to the user
+  - For example:
 * CVE-2018-9419	l2c ble ID - https://android.googlesource.com/platform/system/bt/+/f1c2c86080bcd7b3142ff821441696fc99c2bc9a
+  - End of packet is not checked, bytes can be leaked
+```
+     case L2CAP_CMD_DISC_REQ:
++      if (p + 4 > p_pkt_end) {
++        android_errorWriteLog(0x534e4554, "74121659");
++        return;
++      }
+```
 * CVE-2018-9555	l2cap RCE: https://android.googlesource.com/platform/system/bt/+/02fc52878d8dba16b860fbdf415b6e4425922b2c
+  - todo
+```
++    if (sdu_length < p_buf->len) {
++      L2CAP_TRACE_ERROR("%s: Invalid sdu_length: %d", __func__, sdu_length);
++      android_errorWriteWithInfoLog(0x534e4554, "112321180", -1, NULL, 0);
++      /* Discard the buffer */
++      osi_free(p_buf);
++      return;
++    }
+```
 * ble l2cap retransmission RCE (regression of CVE-2018-9555) - https://android.googlesource.com/platform/system/bt/+/488aa8befd5bdffed6cfca7a399d2266ffd201fb
 ```
 void l2c_lcc_proc_pdu(tL2C_CCB* p_ccb, BT_HDR* p_buf) {
@@ -114,17 +137,14 @@ static void hidh_l2cif_data_ind(uint16_t l2cap_cid, BT_HDR* p_msg) {
    rep_type = param & HID_PAR_REP_TYPE_MASK;
 ```
 * CVE-2018-9484 Out of Bounds read in l2cap - https://android.googlesource.com/platform/system/bt/+/d5b44f6522c3294d6f5fd71bc6670f625f716460
+  - you can position p and get data out
+```
+if ((cfg_len + L2CAP_CFG_OPTION_OVERHEAD) <= cmd_len) {
++ if (p + cfg_len > p_next_cmd) return;
+```
 
-<<<<<<< Updated upstream
 * That thing Joel sent
 * Tesla Keen Team report - https://www.blackhat.com/docs/us-17/thursday/us-17-Nie-Free-Fall-Hacking-Tesla-From-Wireless-To-CAN-Bus-wp.pdf
-=======
-* Signalling channel information disclosures
-    - There is a common pattern through out the Android code base of packet lengths not being written
-* LE RCE
-* That thing Joel sent - https://www.cymotive.com/wp-content/uploads/2019/03/Hell2CAP-0day.pdf
-* Tesla Keen Team report
->>>>>>> Stashed changes
 
 ## Interactive Example
 Let's run through an example POC
