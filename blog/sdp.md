@@ -23,9 +23,153 @@ TODO: Run sdp tool on each stack
     - Hard to exploit: You can cause memcpy to copy a huge amount of bytes onto the heap, but where you need to control data to write the heap cookie you aren't able to control it.
     - More details in the presentation: https://github.com/JiounDai/Bluedroid/blob/master/Dissect%20Android%20Bluetooth%20for%20Fun%20%26%20Profit.pdf
 * CVE-2018-9590	SDP ID: https://android.googlesource.com/platform/system/bt/+/297598898683b81e921474e6e74c0ddaedbb8bb5
+```
+diff --git a/stack/sdp/sdp_discovery.cc b/stack/sdp/sdp_discovery.cc
+index 95f55bf..1ca2ad3 100644
+--- a/stack/sdp/sdp_discovery.cc
++++ b/stack/sdp/sdp_discovery.cc
+@@ -55,7 +55,7 @@
+ static uint8_t* save_attr_seq(tCONN_CB* p_ccb, uint8_t* p, uint8_t* p_msg_end);
+ static tSDP_DISC_REC* add_record(tSDP_DISCOVERY_DB* p_db,
+                                  const RawAddress& p_bda);
+-static uint8_t* add_attr(uint8_t* p, tSDP_DISCOVERY_DB* p_db,
++static uint8_t* add_attr(uint8_t* p, uint8_t* p_end, tSDP_DISCOVERY_DB* p_db,
+                          tSDP_DISC_REC* p_rec, uint16_t attr_id,
+                          tSDP_DISC_ATTR* p_parent_attr, uint8_t nest_level);
+ 
+@@ -770,7 +770,7 @@
+     BE_STREAM_TO_UINT16(attr_id, p);
+ 
+     /* Now, add the attribute value */
+-    p = add_attr(p, p_ccb->p_db, p_rec, attr_id, NULL, 0);
++    p = add_attr(p, p_seq_end, p_ccb->p_db, p_rec, attr_id, NULL, 0);
+ 
+     if (!p) {
+       SDP_TRACE_WARNING("SDP - DB full add_attr");
+@@ -830,7 +830,7 @@
+  * Returns          pointer to next byte in data stream
+  *
+  ******************************************************************************/
+-static uint8_t* add_attr(uint8_t* p, tSDP_DISCOVERY_DB* p_db,
++static uint8_t* add_attr(uint8_t* p, uint8_t* p_end, tSDP_DISCOVERY_DB* p_db,
+                          tSDP_DISC_REC* p_rec, uint16_t attr_id,
+                          tSDP_DISC_ATTR* p_parent_attr, uint8_t nest_level) {
+   tSDP_DISC_ATTR* p_attr;
+@@ -839,7 +839,7 @@
+   uint16_t attr_type;
+   uint16_t id;
+   uint8_t type;
+-  uint8_t* p_end;
++  uint8_t* p_attr_end;
+   uint8_t is_additional_list = nest_level & SDP_ADDITIONAL_LIST_MASK;
+ 
+   nest_level &= ~(SDP_ADDITIONAL_LIST_MASK);
+@@ -856,6 +856,13 @@
+   else
+     total_len = sizeof(tSDP_DISC_ATTR);
+ 
++  p_attr_end = p + attr_len;
++  if (p_attr_end > p_end) {
++    android_errorWriteLog(0x534e4554, "115900043");
++    SDP_TRACE_WARNING("%s: SDP - Attribute length beyond p_end", __func__);
++    return NULL;
++  }
++
+   /* Ensure it is a multiple of 4 */
+   total_len = (total_len + 3) & ~3;
+ 
+@@ -879,18 +886,17 @@
+            * sub-attributes */
+           p_db->p_free_mem += sizeof(tSDP_DISC_ATTR);
+           p_db->mem_free -= sizeof(tSDP_DISC_ATTR);
+-          p_end = p + attr_len;
+           total_len = 0;
+ 
+           /* SDP_TRACE_DEBUG ("SDP - attr nest level:%d(list)", nest_level); */
+           if (nest_level >= MAX_NEST_LEVELS) {
+             SDP_TRACE_ERROR("SDP - attr nesting too deep");
+-            return (p_end);
++            return p_attr_end;
+           }
+ 
+           /* Now, add the list entry */
+-          p = add_attr(p, p_db, p_rec, ATTR_ID_PROTOCOL_DESC_LIST, p_attr,
+-                       (uint8_t)(nest_level + 1));
++          p = add_attr(p, p_end, p_db, p_rec, ATTR_ID_PROTOCOL_DESC_LIST,
++                       p_attr, (uint8_t)(nest_level + 1));
+ 
+           break;
+         }
+@@ -949,7 +955,7 @@
+           break;
+         default:
+           SDP_TRACE_WARNING("SDP - bad len in UUID attr: %d", attr_len);
+-          return (p + attr_len);
++          return p_attr_end;
+       }
+       break;
+ 
+@@ -959,22 +965,22 @@
+        * sub-attributes */
+       p_db->p_free_mem += sizeof(tSDP_DISC_ATTR);
+       p_db->mem_free -= sizeof(tSDP_DISC_ATTR);
+-      p_end = p + attr_len;
+       total_len = 0;
+ 
+       /* SDP_TRACE_DEBUG ("SDP - attr nest level:%d", nest_level); */
+       if (nest_level >= MAX_NEST_LEVELS) {
+         SDP_TRACE_ERROR("SDP - attr nesting too deep");
+-        return (p_end);
++        return p_attr_end;
+       }
+       if (is_additional_list != 0 ||
+           attr_id == ATTR_ID_ADDITION_PROTO_DESC_LISTS)
+         nest_level |= SDP_ADDITIONAL_LIST_MASK;
+       /* SDP_TRACE_DEBUG ("SDP - attr nest level:0x%x(finish)", nest_level); */
+ 
+-      while (p < p_end) {
++      while (p < p_attr_end) {
+         /* Now, add the list entry */
+-        p = add_attr(p, p_db, p_rec, 0, p_attr, (uint8_t)(nest_level + 1));
++        p = add_attr(p, p_end, p_db, p_rec, 0, p_attr,
++                     (uint8_t)(nest_level + 1));
+ 
+         if (!p) return (NULL);
+       }
+@@ -992,7 +998,7 @@
+           break;
+         default:
+           SDP_TRACE_WARNING("SDP - bad len in boolean attr: %d", attr_len);
+-          return (p + attr_len);
++          return p_attr_end;
+       }
+       break;
+ 
+```
 * CVE-2018-9566	SDP ID: https://android.googlesource.com/platform/system/bt/+/314336a22d781f54ed7394645a50f74d6743267d
+  - No length check
+```
++  if (p_reply + 8 > p_reply_end) {
++    android_errorWriteLog(0x534e4554, "74249842");
++    sdp_disconnect(p_ccb, SDP_GENERIC_ERROR);
++    return;
++  }
+   /* Skip transaction, and param len */
+   p_reply += 4;
+   BE_STREAM_TO_UINT16(total, p_reply);
+// ...
++  if (p_reply + ((p_ccb->num_handles - orig) * 4) + 1 > p_reply_end) {
++    android_errorWriteLog(0x534e4554, "74249842");
++    sdp_disconnect(p_ccb, SDP_GENERIC_ERROR);
++    return;
++  }
++
+   for (xx = orig; xx < p_ccb->num_handles; xx++)
+     BE_STREAM_TO_UINT32(p_ccb->handles[xx], p_reply);
+```
 * CVE-2018-9562	SDP ID in client: https://android.googlesource.com/platform/system/bt/+/1bb14c41a72978c6075c5753a8301ddcbb10d409
 * CVE-2018-9504	ID in SDP - https://android.googlesource.com/platform/system/bt/+/11fb7aa03437eccac98d90ca2de1730a02a515e2
+    - ID in the client while saving response from attacker
 ```
 static void sdp_copy_raw_data(tCONN_CB* p_ccb, bool offset) {
   unsigned int cpy_len, rem_len;

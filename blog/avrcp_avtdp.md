@@ -43,6 +43,7 @@ No length checks
              BE_STREAM_TO_ARRAY(p, player->features, AVRC_FEATURE_MASK_SIZE);
 ```
 * CVE-2018-9588	AVDP ID: https://android.googlesource.com/platform/system/bt/+/bf9ff0c5215861ab673e211cd06e009f3157aab2
+  - This is a juicy info leak
   - No length checks
 ```
 +        min_len += 20;
