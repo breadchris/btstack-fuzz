@@ -4,6 +4,9 @@ This is probably the most sketch protocol in Bluetooth. There is a lot going on 
 
 ## Notable Features
 * The SDP `server` handles remote queries of the SDP database which contains information for all registered services for the device. For example...
+  * Each Bluetooth protocol is assigned a specific number defined by the specification: https://www.bluetooth.com/specifications/assigned-numbers/service-discovery/
+  * Higher level applications register themselves to the `server` via the internal SDP API the server exposes (as seen here in btstack for PAN: ). These applications identify themselves to remote devices using `service class identifiers` (Bluez: https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/lib/sdp.h#n78)
+  * Each of these higher level protocols use different `data elements` (below) to convey to a remote device how the application is configured (metadata about the bluetooth application), these are identified by `service attribute definitions` (seen here in Bluez: https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/lib/sdp.h#n250). For example, here is the SDP registration specification for PAN. We can see btstack specifically parsing an RFCOMM SDP entry: `examples/sdp_rfcomm_query.c`
 * The SDP `client` performs queries and parses their response
 * There are three different queries which can be performed: (TODO fill in these details)
   * ServiceSearchRequest
@@ -78,6 +81,395 @@ sdp attribute: 0x0004
 summary: uuid 0x0003, l2cap_psm: 0x0000
 
 ---
+
+This code just dumps out relavant info for understanding the BR/EDR attack surface of a device. For a more comprehensive view of what data SDP holds, check out this full SDP dump for the same device:
+
+➜  libusb-intel git:(master) ✗ sudo ./sdp_general_query 
+[sudo] password for breadchris: 
+Packet Log: /tmp/hci_dump.pklg
+USB Path: 07
+Done 0
+Client HCI init done
+BTstack up and running on 18:56:80:04:42:72.
+
+---
+Record nr. 0
+Attribute 0x0001: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001132
+Attribute 0x0002: type  UINT (1), element len  5 , value: 0x00000000
+Attribute 0x0004: type   DES (6), element len 19 
+    type   DES (6), element len  5 
+        type  UUID (3), element len  3 , value: 0x00000100
+    type   DES (6), element len  7 
+        type  UUID (3), element len  3 , value: 0x00000003
+        type  UINT (1), element len  2 , value: 0x00000002
+    type   DES (6), element len  5 
+        type  UUID (3), element len  3 , value: 0x00000008
+Attribute 0x0005: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001002
+Attribute 0x0006: type   DES (6), element len 38 
+    type  UINT (1), element len  3 , value: 0x0000656e
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000100
+    type  UINT (1), element len  3 , value: 0x00006672
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000110
+    type  UINT (1), element len  3 , value: 0x00006465
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000120
+    type  UINT (1), element len  3 , value: 0x00006a61
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000130
+Attribute 0x0008: type  UINT (1), element len  2 , value: 0x000000ff
+Attribute 0x0009: type   DES (6), element len 10 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x00001134
+        type  UINT (1), element len  3 , value: 0x00000100
+Attribute 0x0100: type STRING (4), element len 13 len 11 (0x0b)
+4D 41 50 20 4D 41 53 2D 69 4F 53 
+Attribute 0x0315: type  UINT (1), element len  2 , value: 0x00000000
+Attribute 0x0316: type  UINT (1), element len  2 , value: 0x0000000a
+
+---
+Record nr. 1
+Attribute 0x0001: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001116
+Attribute 0x0002: type  UINT (1), element len  5 , value: 0x00000018
+Attribute 0x0004: type   DES (6), element len 32 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x00000100
+        type  UINT (1), element len  3 , value: 0x0000000f
+    type   DES (6), element len 22 
+        type  UUID (3), element len  3 , value: 0x0000000f
+        type  UINT (1), element len  3 , value: 0x00000100
+        type   DES (6), element len 14 
+            type  UINT (1), element len  3 , value: 0x00000800
+            type  UINT (1), element len  3 , value: 0x00000806
+            type  UINT (1), element len  3 , value: 0x00008100
+            type  UINT (1), element len  3 , value: 0x000086dd
+Attribute 0x0005: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001002
+Attribute 0x0006: type   DES (6), element len 38 
+    type  UINT (1), element len  3 , value: 0x0000656e
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000100
+    type  UINT (1), element len  3 , value: 0x00006672
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000110
+    type  UINT (1), element len  3 , value: 0x00006465
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000120
+    type  UINT (1), element len  3 , value: 0x00006a61
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000130
+Attribute 0x0008: type  UINT (1), element len  2 , value: 0x00000000
+Attribute 0x0009: type   DES (6), element len 10 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x00001116
+        type  UINT (1), element len  3 , value: 0x00000100
+Attribute 0x0100: type STRING (4), element len 28 len 26 (0x1a)
+50 41 4E 20 4E 65 74 77 6F 72 6B 20 41 63 63 65 73 73 20 50 72 6F 66 69 6C 65 
+Attribute 0x0101: type STRING (4), element len 22 len 20 (0x14)
+4E 65 74 77 6F 72 6B 20 41 63 63 65 73 73 20 50 6F 69 6E 74 
+Attribute 0x030a: type  UINT (1), element len  3 , value: 0x00000001
+Attribute 0x030b: type  UINT (1), element len  3 , value: 0x0000000d
+Attribute 0x030c: type  UINT (1), element len  5 , value: 0x0003e800
+
+---
+Record nr. 2
+Attribute 0x0001: type   DES (6), element len 19 
+    type  UUID (3), element len 17 , value: 02030302-1D19-415F-86F2-22A2106A0A77
+Attribute 0x0002: type  UINT (1), element len  5 , value: 0x00000000
+Attribute 0x0004: type   DES (6), element len 14 
+    type   DES (6), element len  5 
+        type  UUID (3), element len  3 , value: 0x00000100
+    type   DES (6), element len  7 
+        type  UUID (3), element len  3 , value: 0x00000003
+        type  UINT (1), element len  2 , value: 0x00000001
+Attribute 0x0005: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001002
+Attribute 0x0006: type   DES (6), element len 38 
+    type  UINT (1), element len  3 , value: 0x0000656e
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000100
+    type  UINT (1), element len  3 , value: 0x00006672
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000110
+    type  UINT (1), element len  3 , value: 0x00006465
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000120
+    type  UINT (1), element len  3 , value: 0x00006a61
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000130
+Attribute 0x0008: type  UINT (1), element len  2 , value: 0x000000ff
+Attribute 0x0009: type   DES (6), element len 10 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x00001101
+        type  UINT (1), element len  3 , value: 0x00000100
+Attribute 0x0100: type STRING (4), element len 17 len 15 (0x0f)
+57 69 72 65 6C 65 73 73 20 69 41 50 20 76 32 
+
+---
+Record nr. 3
+Attribute 0x0001: type   DES (6), element len 19 
+    type  UUID (3), element len 17 , value: 00000000-DECA-FADE-DECA-DEAFDECACAFE
+Attribute 0x0002: type  UINT (1), element len  5 , value: 0x00000000
+Attribute 0x0004: type   DES (6), element len 14 
+    type   DES (6), element len  5 
+        type  UUID (3), element len  3 , value: 0x00000100
+    type   DES (6), element len  7 
+        type  UUID (3), element len  3 , value: 0x00000003
+        type  UINT (1), element len  2 , value: 0x00000001
+Attribute 0x0005: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001002
+Attribute 0x0006: type   DES (6), element len 38 
+    type  UINT (1), element len  3 , value: 0x0000656e
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000100
+    type  UINT (1), element len  3 , value: 0x00006672
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000110
+    type  UINT (1), element len  3 , value: 0x00006465
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000120
+    type  UINT (1), element len  3 , value: 0x00006a61
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000130
+Attribute 0x0008: type  UINT (1), element len  2 , value: 0x000000ff
+Attribute 0x0009: type   DES (6), element len 10 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x00001101
+        type  UINT (1), element len  3 , value: 0x00000100
+Attribute 0x0100: type STRING (4), element len 14 len 12 (0x0c)
+57 69 72 65 6C 65 73 73 20 69 41 50 
+
+---
+Record nr. 4
+Attribute 0x0001: type   DES (6), element len  8 
+    type  UUID (3), element len  3 , value: 0x0000110e
+    type  UUID (3), element len  3 , value: 0x0000110f
+Attribute 0x0002: type  UINT (1), element len  5 , value: 0x00000000
+Attribute 0x0004: type   DES (6), element len 18 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x00000100
+        type  UINT (1), element len  3 , value: 0x00000017
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x00000017
+        type  UINT (1), element len  3 , value: 0x00000104
+Attribute 0x0005: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001002
+Attribute 0x0006: type   DES (6), element len 38 
+    type  UINT (1), element len  3 , value: 0x0000656e
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000100
+    type  UINT (1), element len  3 , value: 0x00006672
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000110
+    type  UINT (1), element len  3 , value: 0x00006465
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000120
+    type  UINT (1), element len  3 , value: 0x00006a61
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000130
+Attribute 0x0008: type  UINT (1), element len  2 , value: 0x000000ff
+Attribute 0x0009: type   DES (6), element len 10 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x0000110e
+        type  UINT (1), element len  3 , value: 0x00000104
+Attribute 0x0100: type STRING (4), element len 14 len 12 (0x0c)
+41 56 52 43 50 20 44 65 76 69 63 65 
+Attribute 0x0101: type STRING (4), element len 23 len 21 (0x15)
+52 65 6D 6F 74 65 20 43 6F 6E 74 72 6F 6C 20 44 65 76 69 63 65 
+Attribute 0x0311: type  UINT (1), element len  3 , value: 0x00000002
+
+---
+Record nr. 5
+Attribute 0x0001: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x0000110c
+Attribute 0x0002: type  UINT (1), element len  5 , value: 0x00000000
+Attribute 0x0004: type   DES (6), element len 18 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x00000100
+        type  UINT (1), element len  3 , value: 0x00000017
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x00000017
+        type  UINT (1), element len  3 , value: 0x00000104
+Attribute 0x0005: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001002
+Attribute 0x0006: type   DES (6), element len 38 
+    type  UINT (1), element len  3 , value: 0x0000656e
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000100
+    type  UINT (1), element len  3 , value: 0x00006672
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000110
+    type  UINT (1), element len  3 , value: 0x00006465
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000120
+    type  UINT (1), element len  3 , value: 0x00006a61
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000130
+Attribute 0x0008: type  UINT (1), element len  2 , value: 0x000000ff
+Attribute 0x0009: type   DES (6), element len 10 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x0000110e
+        type  UINT (1), element len  3 , value: 0x00000104
+Attribute 0x000d: type   DES (6), element len 20 
+    type   DES (6), element len 18 
+        type   DES (6), element len  8 
+            type  UUID (3), element len  3 , value: 0x00000100
+            type  UINT (1), element len  3 , value: 0x0000001b
+        type   DES (6), element len  8 
+            type  UUID (3), element len  3 , value: 0x00000017
+            type  UINT (1), element len  3 , value: 0x00000104
+Attribute 0x0100: type STRING (4), element len 14 len 12 (0x0c)
+41 56 52 43 50 20 44 65 76 69 63 65 
+Attribute 0x0101: type STRING (4), element len 23 len 21 (0x15)
+52 65 6D 6F 74 65 20 43 6F 6E 74 72 6F 6C 20 44 65 76 69 63 65 
+Attribute 0x0311: type  UINT (1), element len  3 , value: 0x000000d1
+
+---
+Record nr. 6
+Attribute 0x0001: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x0000110a
+Attribute 0x0002: type  UINT (1), element len  5 , value: 0x00000000
+Attribute 0x0004: type   DES (6), element len 18 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x00000100
+        type  UINT (1), element len  3 , value: 0x00000019
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x00000019
+        type  UINT (1), element len  3 , value: 0x00000103
+Attribute 0x0005: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001002
+Attribute 0x0006: type   DES (6), element len 38 
+    type  UINT (1), element len  3 , value: 0x0000656e
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000100
+    type  UINT (1), element len  3 , value: 0x00006672
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000110
+    type  UINT (1), element len  3 , value: 0x00006465
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000120
+    type  UINT (1), element len  3 , value: 0x00006a61
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000130
+Attribute 0x0008: type  UINT (1), element len  2 , value: 0x000000ff
+Attribute 0x0009: type   DES (6), element len 10 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x0000110d
+        type  UINT (1), element len  3 , value: 0x00000103
+Attribute 0x0100: type STRING (4), element len 14 len 12 (0x0c)
+41 75 64 69 6F 20 53 6F 75 72 63 65 
+Attribute 0x0311: type  UINT (1), element len  3 , value: 0x00000001
+
+---
+Record nr. 7
+Attribute 0x0001: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x0000112f
+Attribute 0x0002: type  UINT (1), element len  5 , value: 0x00000000
+Attribute 0x0004: type   DES (6), element len 19 
+    type   DES (6), element len  5 
+        type  UUID (3), element len  3 , value: 0x00000100
+    type   DES (6), element len  7 
+        type  UUID (3), element len  3 , value: 0x00000003
+        type  UINT (1), element len  2 , value: 0x0000000d
+    type   DES (6), element len  5 
+        type  UUID (3), element len  3 , value: 0x00000008
+Attribute 0x0005: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001002
+Attribute 0x0006: type   DES (6), element len 38 
+    type  UINT (1), element len  3 , value: 0x0000656e
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000100
+    type  UINT (1), element len  3 , value: 0x00006672
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000110
+    type  UINT (1), element len  3 , value: 0x00006465
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000120
+    type  UINT (1), element len  3 , value: 0x00006a61
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000130
+Attribute 0x0008: type  UINT (1), element len  2 , value: 0x000000ff
+Attribute 0x0009: type   DES (6), element len 10 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x00001130
+        type  UINT (1), element len  3 , value: 0x00000100
+Attribute 0x0100: type STRING (4), element len 11 len 9 (0x09)
+50 68 6F 6E 65 62 6F 6F 6B 
+Attribute 0x0314: type  UINT (1), element len  2 , value: 0x00000001
+
+---
+Record nr. 8
+Attribute 0x0001: type   DES (6), element len  8 
+    type  UUID (3), element len  3 , value: 0x0000111f
+    type  UUID (3), element len  3 , value: 0x00001203
+Attribute 0x0002: type  UINT (1), element len  5 , value: 0x00000000
+Attribute 0x0004: type   DES (6), element len 14 
+    type   DES (6), element len  5 
+        type  UUID (3), element len  3 , value: 0x00000100
+    type   DES (6), element len  7 
+        type  UUID (3), element len  3 , value: 0x00000003
+        type  UINT (1), element len  2 , value: 0x00000008
+Attribute 0x0005: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001002
+Attribute 0x0006: type   DES (6), element len 38 
+    type  UINT (1), element len  3 , value: 0x0000656e
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000100
+    type  UINT (1), element len  3 , value: 0x00006672
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000110
+    type  UINT (1), element len  3 , value: 0x00006465
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000120
+    type  UINT (1), element len  3 , value: 0x00006a61
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000130
+Attribute 0x0008: type  UINT (1), element len  2 , value: 0x000000ff
+Attribute 0x0009: type   DES (6), element len 10 
+    type   DES (6), element len  8 
+        type  UUID (3), element len  3 , value: 0x0000111e
+        type  UINT (1), element len  3 , value: 0x00000106
+Attribute 0x0100: type STRING (4), element len 19 len 17 (0x11)
+48 61 6E 64 73 66 72 65 65 20 47 61 74 65 77 61 79 
+Attribute 0x0301: type  UINT (1), element len  2 , value: 0x00000001
+Attribute 0x0311: type  UINT (1), element len  3 , value: 0x0000002f
+
+---
+Record nr. 9
+Attribute 0x0001: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001200
+Attribute 0x0002: type  UINT (1), element len  5 , value: 0x00000000
+Attribute 0x0005: type   DES (6), element len  5 
+    type  UUID (3), element len  3 , value: 0x00001002
+Attribute 0x0006: type   DES (6), element len 38 
+    type  UINT (1), element len  3 , value: 0x0000656e
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000100
+    type  UINT (1), element len  3 , value: 0x00006672
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000110
+    type  UINT (1), element len  3 , value: 0x00006465
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000120
+    type  UINT (1), element len  3 , value: 0x00006a61
+    type  UINT (1), element len  3 , value: 0x0000006a
+    type  UINT (1), element len  3 , value: 0x00000130
+Attribute 0x0008: type  UINT (1), element len  2 , value: 0x000000ff
+Attribute 0x0101: type STRING (4), element len 17 len 15 (0x0f)
+50 6E 50 20 49 6E 66 6F 72 6D 61 74 69 6F 6E 
+Attribute 0x0200: type  UINT (1), element len  3 , value: 0x00000102
+Attribute 0x0201: type  UINT (1), element len  3 , value: 0x0000004c
+Attribute 0x0202: type  UINT (1), element len  3 , value: 0x00006f02
+Attribute 0x0203: type  UINT (1), element len  3 , value: 0x00000c10
+Attribute 0x0204: type  BOOL (5), element len  2 , value: 0x00000001
+Attribute 0x0205: type  UINT (1), element len  3 , value: 0x00000001
+Attribute 0xa000: type  UINT (1), element len  5 , value: 0x000006c4
+Attribute 0xafff: type  UINT (1), element len  3 , value: 0x00000001
+
 ```
 
 ## CVEs
