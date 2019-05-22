@@ -10,12 +10,75 @@ This is probably the most sketch protocol in Bluetooth. There is a lot going on 
   * ServiceAttributeRequest
   * ServiceSearchAttributeRequest
 * Queries are comprised of `data elements` which are type, length, value structures (seen here: btstack sdp_util.h:105)
-  *
-* The parsing is relatively complex, I think bluez's implementation is the clearest
-* If a response is too big, a continuation state is created
+  * These `data elements` 
+* The parsing is relatively complex, I think bluez's implementation is the clearest: https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/lib/sdp.c
+* If a response is too big, a `continuation state` is created (TODO: Reference specification)
+  * This `continuation state` has led to a number of vulnerabilities with Android (TODO: refs) due to the server either trusting the client's state or the internal state becomes corrupt and lengths become out of sync (TODO: ref bluebourne exploit leak)
 
 ## Attack Surface
+* Since every device must always expose their SDP server (allow JustWorks pairing, see HCI/L2cap) to all nearby devices to tell them what sevices are accessible on the device, this provides a nice no-interaction attack surface. Additionally, a given bluetooth stack might have some sort of automated trigger (see iOS Airpod discovery) which causes it to use its SDP client to send a request and parse a response from the attacker's device. Again, a no-interaction needed attack surface. 
+* The SDP protocol is sufficiently complex to most likely contain bugs in any implementation, as shown in researchers digging through Android.
+
 TODO: Run sdp tool on each stack
+
+```
+➜  libusb-intel git:(fuzzable) ✗ sudo ./sdp_l2cap_scan --address 38:CA:DA:85:5F:E1
+Packet Log: /tmp/hci_dump.pklg
+USB Path: 07
+Client HCI init done
+BTstack up and running on 18:56:80:04:42:72.
+
+---
+Record nr. 0
+sdp attribute: 0x0004
+summary: uuid 0x0003, l2cap_psm: 0x0000
+
+---
+Record nr. 1
+sdp attribute: 0x0004
+summary: uuid 0x0100, l2cap_psm: 0x000f, name: BNEP
+summary: uuid 0x000f, l2cap_psm: 0x0100, name: L2CAP
+
+---
+Record nr. 2
+sdp attribute: 0x0004
+summary: uuid 0x0003, l2cap_psm: 0x0000
+
+---
+Record nr. 3
+sdp attribute: 0x0004
+summary: uuid 0x0003, l2cap_psm: 0x0000
+
+---
+Record nr. 4
+sdp attribute: 0x0004
+summary: uuid 0x0100, l2cap_psm: 0x0017, name: AVCTP
+summary: uuid 0x0017, l2cap_psm: 0x0104
+
+---
+Record nr. 5
+sdp attribute: 0x0004
+summary: uuid 0x0100, l2cap_psm: 0x0017, name: AVCTP
+summary: uuid 0x0017, l2cap_psm: 0x0104
+
+---
+Record nr. 6
+sdp attribute: 0x0004
+summary: uuid 0x0100, l2cap_psm: 0x0019, name: AVDTP
+summary: uuid 0x0019, l2cap_psm: 0x0103
+
+---
+Record nr. 7
+sdp attribute: 0x0004
+summary: uuid 0x0003, l2cap_psm: 0x0000
+
+---
+Record nr. 8
+sdp attribute: 0x0004
+summary: uuid 0x0003, l2cap_psm: 0x0000
+
+---
+```
 
 ## CVEs
 ### Android
@@ -168,6 +231,19 @@ index 95f55bf..1ca2ad3 100644
      BE_STREAM_TO_UINT32(p_ccb->handles[xx], p_reply);
 ```
 * CVE-2018-9562	SDP ID in client: https://android.googlesource.com/platform/system/bt/+/1bb14c41a72978c6075c5753a8301ddcbb10d409
+  - This one is actually pretty interesting. `num_uuid` was previously set to 2 which when copying from `uuid_list` (located on the stack as `Uuid uuid_list[1];`) would copy an additional `sizeof(Uuid)` bytes into the `uuid_filters` array for the SDP entry. This data would then be sent if device received a service search attribute response (sdp_discovery.cc:584) and a continuation request is needed (sdp_discovery.cc:563).
+```
+Uuid uuid_list[1];
+...
+num_uuid = 2;
+...
+for (xx = 0; xx < num_uuid; xx++) p_db->uuid_filters[xx] = *p_uuid_list++;
+...
+p = sdpu_build_uuid_seq(p, p_ccb->p_db->num_uuid_filters,
+                             p_ccb->p_db->uuid_filters);
+...
+L2CA_DataWrite(p_ccb->connection_id, p_msg);
+```
 * CVE-2018-9504	ID in SDP - https://android.googlesource.com/platform/system/bt/+/11fb7aa03437eccac98d90ca2de1730a02a515e2
     - ID in the client while saving response from attacker
 ```
@@ -255,6 +331,37 @@ void bta_dm_sdp_result(tBTA_DM_MSG* p_data) {
        } while (p_sdp_rec);
 ```
 * CVE-2017-13255 SDP RCE - https://android.googlesource.com/platform/system/bt/+/f0edf6571d2d58e66ee0b100ebe49c585d31489f
-	* Integer underflow in process_service_attr_req, max_list_len is read from request
+```
+  // TODO: Not sure what the vuln is?
+```
 * CVE-2017-13290 SDP ID - https://android.googlesource.com/platform/system/bt/+/72b1cebaa9cc7ace841d887f0d4a4bf6daccde6e
+  * The end of the request was never checked. This is the same problem as seen in other areas of the stack, but the approach to fixing is a lot more consistent than other fixes.
+  * The end of the request is checked accross many different functions with this patch.
+```
+ static void process_service_search_attr_req(tCONN_CB* p_ccb, uint16_t trans_num,
+                                             uint16_t param_len, uint8_t* p_req,
+-                                            UNUSED_ATTR uint8_t* p_req_end);
++                                            uint8_t* p_req_end);
+
++
++  if (p_req + sizeof(param_len) > p_req_end) {
++    android_errorWriteLog(0x534e4554, "69384124");
++    sdpu_build_n_send_error(p_ccb, trans_num, SDP_INVALID_REQ_SYNTAX,
++                            SDP_TEXT_BAD_HEADER);
++  }
++
+   BE_STREAM_TO_UINT16(param_len, p_req);
+```
 * CVE-2017-13259 SDP ID - https://android.googlesource.com/platform/system/bt/+/0627e76edefd948dc3efe11564d7e53d56aac80c
+  * Similar to CVE-2017-13290 but this fixes reading from the end of the request in the client.
+```
++static void process_service_search_rsp(tCONN_CB* p_ccb, uint8_t* p_reply,
++                                       uint8_t* p_reply_end);
+
+
++    if (p_reply + cont_len > p_reply_end) {
++      android_errorWriteLog(0x534e4554, "68161546");
++      sdp_disconnect(p_ccb, SDP_INVALID_CONT_STATE);
++      return;
++    }
+```
