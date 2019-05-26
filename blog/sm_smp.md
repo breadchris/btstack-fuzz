@@ -2,6 +2,16 @@
 
 ## SMP - Notable Features
 - Capabilities and security levels
+Security Levels:
+btstack: https://sourcegraph.com/github.com/bluekitchen/btstack@develop/-/blob/src/l2cap.c#L2232:64
+fluoride: https://android.googlesource.com/platform/system/bt/+/refs/heads/master/stack/btm/btm_sec.cc#2248
+nimble: https://github.com/apache/mynewt-nimble/blob/2d3705b94f7b5d2493c71abb5ba4d33b3d763735/apps/bttester/src/gap.c#L1079
+bluez: https://sourcegraph.com/github.com/torvalds/linux@master/-/blob/net/bluetooth/l2cap_core.c#L815
+
+Nist Guide for BT Security:
+https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-121r2.pdf
+
+## SM - Notable Features
 
 ## CVEs
 ### Android
@@ -13,4 +23,5 @@
 	*   if (p_cb->role > HCI_ROLE_SLAVE) { --> state_table = smp_br_state_table[curr_state][p_cb->role];
 	* Attacker supplied p_cb->role had ended up being used to lookup index in smp_br_state_table, letting you specify what function you wanted to call
 	* also in CVE-2018-9365 https://android.googlesource.com/platform/system/bt/+/ae94a4c333417a1829030c4d87a58ab7f1401308
+	* This was discovered by Quarkslab https://blog.quarkslab.com/a-story-about-three-bluetooth-vulnerabilities-in-android.html
 * SMP use after free: https://android.googlesource.com/platform/system/bt/+/fe621261a1f66463df71cfef2bdd037374e3c6b2

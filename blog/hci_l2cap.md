@@ -26,10 +26,19 @@ HCI is not entirely interesting, it is mainly used for configuring the Bluetooth
 
 More information on HCI can be found here: https://bluekitchen-gmbh.com/btstack/protocols/#hci-host-controller-interface
 
-Android:
-Bluez:
-
-// TODO: iOS, other stacks
+MacOS Stack
+	* written in objc
+iOS Stack
+	* written in c
+Android
+BTStack
+mynewt
+nimble - zephyr
+Windows
+Toshiba
+Linux (bluez)
+small motorized vehicles
+big motorized vehicles
 
 ## CVEs
 I don't know if there are any?
@@ -66,9 +75,10 @@ TODO: Go through each bluetooth stack and show what channels are registered (poi
   ```
 * CVE-2018-9359 Fix OOB read in process_l2cap_cmd (signalling commands ID) - https://android.googlesource.com/platform/system/bt/+/b66fc16410ff96e9119f8eb282e67960e79075c8
   - Pretty much no signalling commands were checking minimum length and variables read from the packet were sent back to the user
-  - For example:
+  - Check out the Quarkslab writeup: https://blog.quarkslab.com/a-story-about-three-bluetooth-vulnerabilities-in-android.html
 * CVE-2018-9419	l2c ble ID - https://android.googlesource.com/platform/system/bt/+/f1c2c86080bcd7b3142ff821441696fc99c2bc9a
   - End of packet is not checked, bytes can be leaked
+  - Check out the Quarkslab writeup: https://blog.quarkslab.com/a-story-about-three-bluetooth-vulnerabilities-in-android.html
 ```
      case L2CAP_CMD_DISC_REQ:
 +      if (p + 4 > p_pkt_end) {
@@ -77,7 +87,7 @@ TODO: Go through each bluetooth stack and show what channels are registered (poi
 +      }
 ```
 * CVE-2018-9555	l2cap RCE: https://android.googlesource.com/platform/system/bt/+/02fc52878d8dba16b860fbdf415b6e4425922b2c
-  - todo
+  - This code is difficult to hit as you need to have an LE data channel listening for connections (most LE connections interact with GATT)
 ```
 +    if (sdu_length < p_buf->len) {
 +      L2CAP_TRACE_ERROR("%s: Invalid sdu_length: %d", __func__, sdu_length);
@@ -120,6 +130,20 @@ void l2c_lcc_proc_pdu(tL2C_CCB* p_ccb, BT_HDR* p_buf) {
          (uint8_t*)(p_buf + 1) + p_buf->offset, p_buf->len);
 ```
 * CVE-2018-9485	L2ble OOB read - https://android.googlesource.com/platform/system/bt/+/bdbabb2ca4ebb4dc5971d3d42cb12f8048e23a23
+  * End of packet is never checked for an le l2cap configuration request
+```
+   p_pkt_end = p + pkt_len;
+
++  if (p + 4 > p_pkt_end) {
++    android_errorWriteLog(0x534e4554, "80261585");
++    LOG(ERROR) << "invalid read";
++    return;
++  }
++
+   STREAM_TO_UINT8(cmd_code, p);
+   STREAM_TO_UINT8(id, p);
+   STREAM_TO_UINT16(cmd_len, p);
+  ```
 * CVE-2018-9486 l2cap check length - https://android.googlesource.com/platform/system/bt/+/bc6aef4f29387d07e0c638c9db810c6c1193f75b
 ```
 static void hidh_l2cif_data_ind(uint16_t l2cap_cid, BT_HDR* p_msg) {

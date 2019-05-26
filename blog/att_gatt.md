@@ -8,6 +8,7 @@
 ## Attack surface
 * The code for each off the different actions is relatively limited in what it does (hence the "low energy"). So for as far as exploiting the GATT protocol, there is litttle room for vulnerabilities to be introduced.
 * There is a lot of research published on exploiting applications which use GATT (bleah) by identifying information that is exposed and properties that are able to be written to.
+* A really cool challenge that you can try out to learn about BLE application layer hacking is here: https://github.com/hackgnar/ble_ctf
 
 ## CVEs
 
