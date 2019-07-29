@@ -3,9 +3,6 @@
 ## SMP - Notable Features
 - Capabilities and security levels
 
-## SM - Notable Features
-
-
 ## CVEs
 ### Android
 * CVE-2019-1991	RCE in SMP - https://android.googlesource.com/platform/system/bt/+/2d21e75aa8c1e0c4adf178a1330f9f5c573ca045

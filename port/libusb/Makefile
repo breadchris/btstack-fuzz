@@ -47,6 +47,7 @@ EXAMPLES = 					\
 	gatt_browser            \
 	avrcp_browsing_client   \
 	sdp_l2cap_scan			\
+	le_data_channel_server \
 	#sdp_general_query		\
 
 all: ${EXAMPLES}
